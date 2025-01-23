@@ -1,0 +1,91 @@
+@font-face {
+    font-family: 'Inter';
+    src: url('../fonts/Inter/Inter-Light.ttf') format("truetype");
+    font-weight: 300;
+    font-style: normal;
+}
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    background-image: url('../images/alpha-background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    padding: 0;
+}
+ul {
+    padding-left: 0.5rem !important;
+}
+i{
+    font-size: 28px;
+}
+a{
+    text-decoration: none !important;
+}
+label{
+    font-size: 16px;
+    font-weight: bold;
+}
+.login-slot{
+    padding-left: 5.5rem;
+    padding-right: 5.5rem;
+}
+.forget-password-heading {
+    font-size: 24px;
+    font-weight: 600;
+}
+.forget-password-desc{
+    font-size: 13px;
+    color: gray;
+
+}
+.forget-password-btn{
+    display:flex;
+    justify-content:center;
+}
+.forget-password-modal{
+    padding: 7px 40px;
+    font-size: 14px;
+    background:black;
+    color:white;
+}
+.login-slot-heading{
+    color: #000;
+    font-size: 40px;
+    font-weight: bold;
+}
+.login-details{
+    line-height: 3;
+}
+.logo-heading > a{
+    color: #000;
+    font-size: 50px;
+    font-weight: bold;
+}
+.logo-heading > p,.login-slot-text{
+    font-size: 15px;
+    color: gray;
+}
+.forget-password{
+    font-size: 13px;
+}
+.login-submit{
+    background: #000;
+    font-size: 15px;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
+    font-weight: bold;
+}
+
+.nav-pills .nav-link{
+    font-size:14px !important;
+}
+
+
+@media(max-width:500px){
+    .login-slot{
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
