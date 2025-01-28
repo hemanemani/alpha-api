@@ -8,14 +8,24 @@ use App\Http\Middleware\CheckIfAdmin;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\InternationalInquiryController;
+use App\Http\Controllers\DashboardController;
+use Laravel\Sanctum\Sanctum;
 
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth:sanctum');
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->json(['message' => 'CSRF token fetched successfully']);
+});
 
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+
+    Route::get('/refresh', [DashboardController::class, 'refresh_all']);
+    Route::get('/inquiry_calender', [DashboardController::class, 'inquiry_calender']);
+
     Route::resource('inquiries',InquiryController::class);
     Route::get('/inquiry-approved-offers', [InquiryController::class, 'approved_offers'])->name('inquiry.approved.offers');
     Route::get('/inquiry-cancellation-offers', [InquiryController::class, 'cancellation_offers'])->name('inquiry.cancellation.offers');
