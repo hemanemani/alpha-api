@@ -45,12 +45,18 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users'],
             'password' => 'required|string|confirmed|min:8',
+            'user_name' => 'required|string|max:255',
+            'mobile_number' => 'required|string|max:255',
+            'access_level' => 'required|in:full,view,limited'
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'mobile_number' => $request->mobile_number,
+            'user_name' => $request->user_name,
+            'access_level' => $request->access_level
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;

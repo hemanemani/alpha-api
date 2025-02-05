@@ -9,7 +9,6 @@ use Illuminate\Notifications\Notifiable;
 use App\Models\Inquiry;
 use Laravel\Sanctum\HasApiTokens;
 
-
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -24,6 +23,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'user_name',
+        'mobile_number',
+        'access_level',
+        'allowed_pages'
     ];
 
     protected $attributes = [
@@ -51,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'allowed_pages' => 'array',
         ];
     }
 
@@ -62,4 +66,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Inquiry::class,'user_id');
     }
+    public function hasAccess($type)
+    {
+        return $this->access_level === $type;
+    }
+
 }

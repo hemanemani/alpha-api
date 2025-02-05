@@ -10,6 +10,7 @@ use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\InternationalInquiryController;
 use App\Http\Controllers\DashboardController;
 use Laravel\Sanctum\Sanctum;
+use App\Http\Middleware\CheckAccessLevel;
 
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
@@ -18,8 +19,15 @@ Route::get('/sanctum/csrf-cookie', function () {
     return response()->json(['message' => 'CSRF token fetched successfully']);
 });
 
+Route::middleware(['auth:sanctum'])->get('/user-access', function (Request $request) {
+    return response()->json(
+        ['access_level' => $request->user()->access_level,
+        'allowed_pages' => $request->user()->allowed_pages ?? [] ]
+    );
+});
 
-Route::middleware('auth:sanctum')->group(function () {
+
+Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
@@ -38,7 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/international-inquiries/{id}/update-international-inquiry-status', [InternationalInquiryController::class, 'updateInternationInquiryStatus'])->name('inquiries.updateInternationInquiryStatus');
     Route::post('/international-inquiries/bulk-upload', [InternationalInquiryController::class, 'bulkUpload'])->name('international.inquiries.bulkUpload');
 });
-
 
 
 Route::middleware(['auth:sanctum', CheckIfAdmin::class])->group(function () {

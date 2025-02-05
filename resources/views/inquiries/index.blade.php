@@ -16,7 +16,7 @@
                     <th>Mobile Number</th>
                     <th>Inquiry Date</th>
                     <th>Specific Product</th>
-                     <th>Added By</th>
+                    <th>Added By</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>

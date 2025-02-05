@@ -81,19 +81,27 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
+            'user_name' => 'required|string|max:255',
+            'mobile_number' => 'required|string|max:255',
+            'access_level' => 'required|in:full,view,limited',
+            'allowed_pages' => 'nullable|array',
         ]);
-
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => bcrypt($validated['password']),
+            'user_name' => $validated['user_name'],
+            'mobile_number' => $validated['mobile_number'],
+            'access_level' => $validated['access_level'],
+            'allowed_pages' => $validated['access_level'] === 'limited' ? $validated['allowed_pages'] : [],
         ]);
-
+             // Log the user created
         return response()->json([
             'success' => true,
             'message' => 'User Created Successfully',
             'user' => $user
-        ],201);
+        ], 201);
+        
 
     }
     /**
@@ -200,32 +208,34 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users,email,' . $user->id,
             'password' => 'nullable|confirmed|min:8',
+            'user_name' => 'required|string|max:255',
+            'mobile_number' => 'required|string|max:255',
+            'access_level' => 'required|in:full,view,limited',
+            'allowed_pages' => 'nullable|array',
         ]);
-
-       
 
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
+            'mobile_number' => $request->mobile_number,
+            'user_name' => $request->user_name,
+            'access_level' => $request->access_level,
+            'allowed_pages' => $request->access_level === 'limited' ? $request->allowed_pages : [], // Check the access_level of the user being updated
+
         ]);
 
+        if ($request->filled('password')) {
+            $user->update([
+                'password' => bcrypt($request->password),
+            ]);
+        }
+
         return response()->json([
+            'success' => true,
             'message' => 'User updated successfully.',
             'user' =>$user
         ], 200);
 
-
-        // if ($request->filled('password')) {
-        //     $user->update([
-        //         'password' => bcrypt($request->password),
-        //     ]);
-        // }
-
-        // return response()->json([
-        //     'success' => true,
-        //     'message' => 'User updated successfully.',
-        //     'user' => $user,
-        // ], 200);
     }
 
 
