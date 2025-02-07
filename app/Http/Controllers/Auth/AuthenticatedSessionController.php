@@ -42,11 +42,11 @@ class AuthenticatedSessionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string'],
+            'user_name' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($request->only('name', 'password'))) {
+        if (!Auth::attempt($request->only('user_name', 'password'))) {
             return response()->json(['message' => 'Invalid login credentials'], 401);
         }
 

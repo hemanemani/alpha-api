@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permissions', function (Blueprint $table) {
+        Schema::create('blocked_inquiries', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('mobile_number')->unique();  // Store the phone number to block
             $table->timestamps();
         });
     }
@@ -23,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('permissions');
+        Schema::dropIfExists('blocked_inquiries');
     }
 };

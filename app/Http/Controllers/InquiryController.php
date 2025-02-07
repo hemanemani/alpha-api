@@ -6,6 +6,10 @@ use App\Models\Inquiry;
 use Illuminate\Http\Request;
 use App\Imports\InquiryImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\UploadInquiry;
+use App\Models\blockedInquiry;
 
 
 class InquiryController extends Controller
@@ -126,6 +130,20 @@ class InquiryController extends Controller
      *     )
      * )
      */
+    public function blockInquiry(Request $request)
+    {
+
+        BlockedInquiry::create([
+            'mobile_number' => $request->mobile_number,
+        ]);
+    
+        return response()->json([
+            'message' => 'Inquiry blocked successfully.',
+            'success' => true,
+        ], 200);
+    
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -148,6 +166,10 @@ class InquiryController extends Controller
             'user_id' => 'required|exists:users,id',
 
         ]);
+
+        if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists()) {
+            return response()->json(['message' => 'This inquiry is blocked.'], 403);
+        }
 
         $inquiry_date = $request->inquiry_date 
             ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->inquiry_date)->format('Y-m-d') 
@@ -361,11 +383,16 @@ class InquiryController extends Controller
     public function updateInquiryStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|boolean',
+            'status' => 'nullable|boolean',
         ]);
-
         $inquiry = Inquiry::findOrFail($id);
-        $inquiry->status = $request->status;
+
+        if (is_null($request->status)) {
+            $inquiry->status = null;
+        } else {
+            $inquiry->status = $request->status;
+        }
+    
         $inquiry->save();
 
         return response()->json([
@@ -437,23 +464,87 @@ class InquiryController extends Controller
             $request->validate([
                 'file' => 'required|mimes:csv,txt|max:2048',
             ]);
+        
+            $user = Auth::user();
+            $file = $request->file('file');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $filePath = 'uploads/' . $fileName;
+            $fileSize = $file->getSize(); // Size in bytes
 
-            Excel::import(new InquiryImport, $request->file('file'));
+        
+            // Move the file to the public/uploads directory
+            $file->move(public_path('uploads'), $fileName);
+        
+            // Ensure the file exists after move operation
+            if (!file_exists(public_path($filePath))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File upload failed.',
+                    'status'  => 'Upload failed',
+                ], 500);
+            }
 
+            $import = new InquiryImport();
+            Excel::import($import, public_path($filePath));
+
+            if (!empty($import->getErrors())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Upload failed with errors.',
+                    'errors'  => $import->getErrors()
+                ], 422);
+            }
+            
+    
+            
+            // Store upload record in the database
+            UploadInquiry::create([
+                'uploaded_by' => $user->id,
+                'file_name'   => $file->getClientOriginalName(),
+                'file_path'   => $filePath,
+                'uploaded_at' => now(),
+                'status'      => 'Uploaded',
+                'file_size'   => $fileSize
+            ]);
+        
             return response()->json([
-                'success' => true,
-                'message' => 'Inquiries imported successfully.',
+                'success'   => true,
+                'message'   => 'Upload successful!',
+                'file_path' => asset($filePath), // Convert to full URL for frontend
+                'file_size' => $fileSize, // Return file size
+                'status'    => 'Uploaded',
             ], 200);
+        
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'There was an error during import.',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
+                'status'  => 'Upload failed',
             ], 500);
         }
+        
     }
 
+    public function bulkUploadData(){
+        $uploadinquirydata = UploadInquiry::with('user:id,name')->get();
+        return response()->json($uploadinquirydata);
+    }
 
+    public function uploadDestroy($id)
+    {
+        $uploadInquiry = UploadInquiry::find($id);
+        if (!$uploadInquiry) {
+            return response()->json(['message' => 'Item not found'], 404);
+        }
+
+        $uploadInquiry->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Upoaded Data deleted successfully.',
+        ], 200);
+    }
 
     
     public function downloadTemplate()
@@ -545,5 +636,7 @@ class InquiryController extends Controller
             'success' => true,
             'message' => 'Inquiry deleted successfully.',
         ], 200);
-        }
+    }
+
+    
 }

@@ -1,0 +1,4 @@
+id,inquiry_number,mobile_number,inquiry_date,product_categories,specific_product,name,location,inquiry_through,inquiry_reference,first_contact_date,first_response,second_contact_date,second_response,third_contact_date,third_response,notes,created_at,updated_at,status,user_id
+50,3,,10-12-2023,Lotus,Org Lotus,Praful S,Sur,Fac,DM,05-02-2024,Rates are pend,02-05-2024,Not availabel,NULL,NULL,Customer is,19-01-2025 14:55,19-01-2025 14:55,NULL,1
+48,1,,01-04-2024,Honey,Natural H,Amit P,Ahmed,Inst,Call,10-02-2023,The custom,04-12-2024,The vendor i,NULL,NULL,Vendor not,19-01-2025 14:55,19-01-2025 14:59,0,1
+49,2,,03-09-2024,Tea,Green Org,Raj P,Mum,What,Mess,04-12-2022,Vendor is ask,10-04-2023,Customer is ask,02-02-2024,Its not ther,The customer iss,19-01-2025 14:55,19-01-2025 15:02,1,1

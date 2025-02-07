@@ -38,12 +38,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/inquiry-approved-offers', [InquiryController::class, 'approved_offers'])->name('inquiry.approved.offers');
     Route::get('/inquiry-cancellation-offers', [InquiryController::class, 'cancellation_offers'])->name('inquiry.cancellation.offers');
     Route::patch('/inquiries/{id}/update-inquiry-status', [InquiryController::class, 'updateInquiryStatus'])->name('inquiries.updateInquiryStatus');
+    Route::get('/domestic-template-download', [InquiryController::class, 'downloadTemplate'])->name('domestic.download.template');
     Route::post('/inquiries/bulk-upload', [InquiryController::class, 'bulkUpload'])->name('inquiries.bulkUpload');
+    Route::get('/bulk-domestic-data', [InquiryController::class, 'bulkUploadData'])->name('inquiries.bulkUpload.data');
+    Route::delete('/bulk-domestic-data/{id}', [InquiryController::class, 'uploadDestroy']);
+    Route::post('/block-inquiry/{id}', [InquiryController::class, 'blockInquiry']);
+
 
     Route::resource('international_inquiries',InternationalInquiryController::class);
     Route::get('/inquiry-approved-international-offers', [InternationalInquiryController::class, 'approved_offers'])->name('inquiry.international.approved.offers');
     Route::get('/inquiry-cancellation-international-offers', [InternationalInquiryController::class, 'cancellation_offers'])->name('inquiry.international.cancellation.offers');
     Route::patch('/international-inquiries/{id}/update-international-inquiry-status', [InternationalInquiryController::class, 'updateInternationInquiryStatus'])->name('inquiries.updateInternationInquiryStatus');
+    Route::get('/international-template-download', [InternationalInquiryController::class, 'downloadTemplate'])->name('international.download.template');
     Route::post('/international-inquiries/bulk-upload', [InternationalInquiryController::class, 'bulkUpload'])->name('international.inquiries.bulkUpload');
 });
 

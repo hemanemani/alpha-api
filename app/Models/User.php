@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Inquiry;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\UploadInquiry;
+
 
 class User extends Authenticatable
 {
@@ -69,6 +71,10 @@ class User extends Authenticatable
     public function hasAccess($type)
     {
         return $this->access_level === $type;
+    }
+    public function bulk_uploads()
+    {
+        return $this->hasMany(UploadInquiry::class,'uploaded_by');
     }
 
 }

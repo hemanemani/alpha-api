@@ -1,0 +1,4 @@
+"id","inquiry_number","mobile_number","inquiry_date","product_categories","specific_product","name","location","inquiry_through","inquiry_reference","first_contact_date","first_response","second_contact_date","second_response","third_contact_date","third_response","notes","created_at","updated_at","status","user_id"
+"50","3","923928","2023-12-10","Lotus","Org Lotus","Praful S","Sur","Fac","DM","2024-02-05","Rates are pend","2024-05-02","Not availabel",NULL,NULL,"Customer is","2025-01-19 14:55:47","2025-01-19 14:55:47",NULL,"1"
+"48","1","349034","2024-04-01","Honey","Natural H","Amit P","Ahmed","Inst","Call","2023-02-10","The custom","2024-12-04","The vendor i",NULL,NULL,"Vendor not","2025-01-19 14:55:47","2025-01-19 14:59:54","0","1"
+"49","2","94093","2024-09-03","Tea","Green Org","Raj P","Mum","What","Mess","2022-12-04","Vendor is ask","2023-04-10","Customer is ask","2024-02-02","Its not ther","The customer iss","2025-01-19 14:55:47","2025-01-19 15:02:19","1","1"
