@@ -32,7 +32,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
     Route::get('/refresh', [DashboardController::class, 'refresh_all']);
-    Route::get('/inquiry_calender', [DashboardController::class, 'inquiry_calender']);
 
     Route::resource('inquiries',InquiryController::class);
     Route::get('/inquiry-approved-offers', [InquiryController::class, 'approved_offers'])->name('inquiry.approved.offers');
