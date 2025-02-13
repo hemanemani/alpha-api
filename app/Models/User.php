@@ -28,7 +28,8 @@ class User extends Authenticatable
         'user_name',
         'mobile_number',
         'access_level',
-        'allowed_pages'
+        'allowed_pages',
+        'status'
     ];
 
     protected $attributes = [

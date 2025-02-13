@@ -74,6 +74,15 @@ class UserController extends Controller
      * )
      */
 
+     public function updateStatus(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $user->status = $request->status;
+        $user->save();
+
+        return response()->json(["message" => "User status updated successfully"]);
+    }
+
 
     public function store(Request $request)
     {

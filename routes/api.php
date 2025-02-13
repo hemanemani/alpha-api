@@ -29,9 +29,13 @@ Route::middleware(['auth:sanctum'])->get('/user-access', function (Request $requ
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
+    
+
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    Route::post('/update-status/{id}',[UserController::class,'updateStatus']);
 
     Route::get('/refresh', [DashboardController::class, 'refresh_all']);
+
 
     Route::resource('inquiries',InquiryController::class);
     Route::get('/inquiry-approved-offers', [InquiryController::class, 'approved_offers'])->name('inquiry.approved.offers');
