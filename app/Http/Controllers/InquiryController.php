@@ -164,7 +164,7 @@ class InquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-
+            'status' => 'nullable|boolean',
         ]);
 
         if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists()) {
@@ -205,6 +205,7 @@ class InquiryController extends Controller
             'third_response' => $validated['third_response'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
+            'status' => $validated['status']
         ]);
         return response()->json([
             'success' => true,
@@ -335,7 +336,7 @@ class InquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-
+            'status' => 'nullable|boolean',
         ]);
 
         $inquiry_date = $request->inquiry_date 
@@ -372,6 +373,7 @@ class InquiryController extends Controller
             'third_response' => $validated['third_response'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
+            'status' => $validated['status']
         ]);
 
         return response()->json([

@@ -143,6 +143,7 @@ class InternationalInquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
+            'status' => "nullable|boolean"
 
         ]);
 
@@ -180,6 +181,8 @@ class InternationalInquiryController extends Controller
             'third_response' => $validated['third_response'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
+            'status' => $validated['status'],
+
         ]);
         return response()->json([
             'success' => true,
@@ -309,6 +312,7 @@ class InternationalInquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
+            'status' => "nullable|boolean"
 
         ]);
 
@@ -346,6 +350,8 @@ class InternationalInquiryController extends Controller
             'third_response' => $validated['third_response'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
+            'status' => $validated['status'],
+
         ]);
 
         return response()->json([

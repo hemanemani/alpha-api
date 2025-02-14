@@ -26,7 +26,8 @@ class Inquiry extends Model
         'third_contact_date',
         'third_response',
         'notes',
-        'user_id'
+        'user_id',
+        'status'
     ];
     public function user()
     {
