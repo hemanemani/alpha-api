@@ -11,6 +11,7 @@ use App\Http\Controllers\InternationalInquiryController;
 use App\Http\Controllers\DashboardController;
 use Laravel\Sanctum\Sanctum;
 use App\Http\Middleware\CheckAccessLevel;
+use App\Http\Controllers\OfferController;
 
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
@@ -54,6 +55,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/international-inquiries/{id}/update-international-inquiry-status', [InternationalInquiryController::class, 'updateInternationInquiryStatus'])->name('inquiries.updateInternationInquiryStatus');
     Route::get('/international-template-download', [InternationalInquiryController::class, 'downloadTemplate'])->name('international.download.template');
     Route::post('/international-inquiries/bulk-upload', [InternationalInquiryController::class, 'bulkUpload'])->name('international.inquiries.bulkUpload');
+
 });
 
 

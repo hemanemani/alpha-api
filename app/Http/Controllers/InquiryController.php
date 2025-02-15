@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\UploadInquiry;
 use App\Models\blockedInquiry;
+use App\Models\Offer;
+use Carbon\Carbon;
+use Exception;
+
 
 
 class InquiryController extends Controller
@@ -272,6 +276,9 @@ class InquiryController extends Controller
         ], 200);
     }
 
+    
+    
+
    
 
     /**
@@ -315,48 +322,74 @@ class InquiryController extends Controller
      *     )
      * )
      */
+    private function parseDate($date) {
+        if (empty($date)) {
+            return null;
+        }
+    
+        $formats = ['d-m-Y', 'Y-m-d', 'd/m/Y', 'm-d-Y', 'm/d/Y'];
+    
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $date)->format('Y-m-d');
+            } catch (Exception $e) {
+                continue; // Try the next format
+            }
+        }
+        
+        return null; // Return null if no format matched
+    }
+
+    
     public function update(Request $request, Inquiry $inquiry)
     {
 
         $validated = $request->validate([
-            'inquiry_number' => 'required',
-            'mobile_number' => 'required',
-            'inquiry_date' => 'required|date',
-            'product_categories' => 'required|string',
-            'specific_product' => 'required|string',
-            'name' => 'required|string',
-            'location' => 'required|string',
-            'inquiry_through' => 'required|string',
-            'inquiry_reference' => 'required|string',
-            'first_contact_date' => 'required|date',
-            'first_response' => 'required|string',
+            'inquiry_number' => 'sometimes|integer',
+            'mobile_number' => 'sometimes|string',
+            'inquiry_date' => 'sometimes|date',
+            'product_categories' => 'sometimes|string',
+            'specific_product' => 'sometimes|string',
+            'name' => 'sometimes|string',
+            'location' => 'sometimes|string',
+            'inquiry_through' => 'sometimes|string',
+            'inquiry_reference' => 'sometimes|string',
+            'first_contact_date' => 'sometimes|date',
+            'first_response' => 'sometimes|string',
             'second_contact_date' => 'nullable|date',
             'second_response' => 'nullable|string',
             'third_contact_date' => 'nullable|date',
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
-            'user_id' => 'required|exists:users,id',
-            'status' => 'nullable|boolean',
+            'user_id' => 'sometimes|exists:users,id',
+            'status' => 'sometimes|boolean',
+
+            //offers
+            'inquiry_id' => 'sometimes|exists:inquiries,id',
+            'offer_number' => 'sometimes|string',
+            'communication_date' => 'sometimes|date',
+            'received_sample_amount' => 'sometimes|integer',
+            'sample_dispatched_date' => 'sometimes|date',
+            'sample_sent_through' => 'sometimes|string',
+            'sample_received_date' => 'sometimes|date',
+            'offer_notes' => 'sometimes|string',
+
         ]);
 
-        $inquiry_date = $request->inquiry_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->inquiry_date)->format('Y-m-d') 
-            : null;
 
-        $first_contact_date = $request->first_contact_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->first_contact_date)->format('Y-m-d') 
-            : null;
-
-        $second_contact_date = $request->second_contact_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->second_contact_date)->format('Y-m-d') 
-            : null;
-
-        $third_contact_date = $request->third_contact_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->third_contact_date)->format('Y-m-d') 
-            : null;
+        $inquiry_date = $this->parseDate($request->inquiry_date);
+        $first_contact_date = $this->parseDate($request->first_contact_date);
+        $second_contact_date = $this->parseDate($request->second_contact_date);
+        $third_contact_date = $this->parseDate($request->third_contact_date);
+    
+        // Offers
+        $communication_date = $this->parseDate($request->communication_date);
+        $sample_dispatched_date = $this->parseDate($request->sample_dispatched_date);
+        $sample_received_date = $this->parseDate($request->sample_received_date);
+    
 
         $inquiry->update([
-            'inquiry_number' => $validated['inquiry_number'],
+            'inquiry_number' => $validated['inquiry_number'] ?? $inquiry->inquiry_number,
             'mobile_number' => $validated['mobile_number'],
             'inquiry_date' => $inquiry_date,
             'product_categories' => $validated['product_categories'],
@@ -376,9 +409,28 @@ class InquiryController extends Controller
             'status' => $validated['status']
         ]);
 
+        $offer = null;
+        if($inquiry->status == 1){
+            $offer = Offer::updateOrCreate(
+                ['inquiry_id' => $inquiry->id],
+                [
+                'offer_number' => $validated['offer_number'],
+                'communication_date' => $communication_date,
+                'received_sample_amount' => $validated['received_sample_amount'],
+                'sample_dispatched_date' => $sample_dispatched_date,
+                'sample_sent_through' => $validated['sample_sent_through'],
+                'sample_received_date' => $sample_received_date,
+                'offer_notes' => $validated['offer_notes']
+            ]);
+        }else {
+            $offer = null;
+        }
+    
+
         return response()->json([
             'message' => 'Inquiry updated successfully.',
-            'inquiry' =>$inquiry
+            'inquiry' =>$inquiry,
+            'offer' => $offer
         ], 200);
     }
 

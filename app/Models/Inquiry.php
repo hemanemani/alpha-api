@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use App\Models\Offer;
+
 
 class Inquiry extends Model
 {
@@ -33,4 +35,9 @@ class Inquiry extends Model
     {
         return $this->belongsTo(User::class,'user_id');
     }
+    public function offers()
+    {
+        return $this->hasMany(Offer::class, 'inquiry_id');
+    }
+
 }
