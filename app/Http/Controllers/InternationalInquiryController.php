@@ -6,6 +6,12 @@ use App\Models\InternationInquiry;
 use Illuminate\Http\Request;
 use App\Imports\InternationalInquiryImport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\BlockedInternationalInquiry;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Exception;
+use App\Models\InternationalOffer;
+use App\Models\BlockedInternationalOffer;
 
 class InternationalInquiryController extends Controller
 {
@@ -33,7 +39,7 @@ class InternationalInquiryController extends Controller
      */
     public function index()
     {
-        $inquiries = InternationInquiry::with('user')->whereNull('status')->get();
+        $inquiries = InternationInquiry::with('user')->where('status','2')->get();
         return response()->json($inquiries);
     }
 
@@ -57,8 +63,10 @@ class InternationalInquiryController extends Controller
 
     public function approved_offers()
     {
-        $approved_offers = InternationInquiry::where('status', 1)->get();
-        return response()->json($approved_offers);
+        $approved_offers = InternationInquiry::where('status', 1)
+        ->whereNull('offers_status')
+        ->get();
+            return response()->json($approved_offers);
     }
     /**
      * @OA\Get(
@@ -79,7 +87,10 @@ class InternationalInquiryController extends Controller
      */
     public function cancellation_offers()
     {
-        $cancelled_offers = InternationInquiry::where('status', 0)->get();
+        $blockedNumbers = DB::table('blocked_international_inquiries')->pluck('mobile_number')->toArray();
+        $cancelled_offers = InternationInquiry::where('status', 0)
+        ->whereNotIn('mobile_number', $blockedNumbers)
+        ->get();
         return response()->json($cancelled_offers);
     }
 
@@ -123,6 +134,36 @@ class InternationalInquiryController extends Controller
      *     )
      * )
      */
+
+     public function blockInternationalInquiry(Request $request)
+     {
+ 
+         BlockedInternationalInquiry::create([
+             'mobile_number' => $request->mobile_number,
+         ]);
+     
+         return response()->json([
+             'message' => 'International Inquiry blocked successfully.',
+             'success' => true,
+         ], 200);
+     
+     }
+
+     public function blockInternationalOffer(Request $request)
+     {
+ 
+         BlockedInternationalOffer::create([
+             'mobile_number' => $request->mobile_number,
+         ]);
+     
+         return response()->json([
+             'message' => 'International Inquiry blocked successfully.',
+             'success' => true,
+         ], 200);
+     
+     }
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -143,9 +184,13 @@ class InternationalInquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-            'status' => "nullable|boolean"
+            'status' => "required|boolean"
 
         ]);
+
+        if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() ) {
+            return response()->json(['message' => 'This inquiry is blocked.'], 403);
+        }
 
         $inquiry_date = $request->inquiry_date 
             ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->inquiry_date)->format('Y-m-d') 
@@ -291,46 +336,87 @@ class InternationalInquiryController extends Controller
      *     )
      * )
      */
+
+     public function getInternationalInquiryWithOffers($id)
+     {
+         $international_inquiry = InternationInquiry::where('id', $id)->first();
+ 
+         if (!$international_inquiry) {
+             return response()->json(['message' => 'International Inquiry not found'], 404);
+         }
+ 
+         $international_offers = InternationalOffer::where('international_inquiry_id', $id)->get();
+ 
+         return response()->json([
+             'international_inquiry' => $international_inquiry,
+             'international_offers' => $international_offers,
+         ]);
+ 
+     }
+
+     private function parseDate($date) {
+        if (empty($date)) {
+            return null;
+        }
+    
+        $formats = ['d-m-Y', 'Y-m-d', 'd/m/Y', 'm-d-Y', 'm/d/Y'];
+    
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $date)->format('Y-m-d');
+            } catch (Exception $e) {
+                continue; // Try the next format
+            }
+        }
+        
+        return null; // Return null if no format matched
+    }
+    
     public function update(Request $request, InternationInquiry $international_inquiry)
     {
 
         $validated = $request->validate([
-            'inquiry_number' => 'required',
-            'mobile_number' => 'required',
-            'inquiry_date' => 'required|date',
-            'product_categories' => 'required|string',
-            'specific_product' => 'required|string',
-            'name' => 'required|string',
-            'location' => 'required|string',
-            'inquiry_through' => 'required|string',
-            'inquiry_reference' => 'required|string',
-            'first_contact_date' => 'required|date',
-            'first_response' => 'required|string',
+            'inquiry_number' => 'sometimes|integer',
+            'mobile_number' => 'sometimes|string',
+            'inquiry_date' => 'sometimes|date',
+            'product_categories' => 'sometimes|string',
+            'specific_product' => 'sometimes|string',
+            'name' => 'sometimes|string',
+            'location' => 'sometimes|string',
+            'inquiry_through' => 'sometimes|string',
+            'inquiry_reference' => 'sometimes|string',
+            'first_contact_date' => 'sometimes|date',
+            'first_response' => 'sometimes|string',
             'second_contact_date' => 'nullable|date',
             'second_response' => 'nullable|string',
             'third_contact_date' => 'nullable|date',
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
-            'user_id' => 'required|exists:users,id',
-            'status' => "nullable|boolean"
+            'user_id' => 'sometimes|exists:users,id',
+            'status' => 'sometimes|integer',
+
+            //offers
+            'international_inquiry_id' => 'sometimes|exists:international_inquiries,id',
+            'offer_number' => 'sometimes|string',
+            'communication_date' => 'sometimes|date',
+            'received_sample_amount' => 'sometimes|integer',
+            'sample_dispatched_date' => 'sometimes|date',
+            'sample_sent_through' => 'sometimes|string',
+            'sample_received_date' => 'sometimes|date',
+            'offer_notes' => 'sometimes|string',
+            
 
         ]);
 
-        $inquiry_date = $request->inquiry_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->inquiry_date)->format('Y-m-d') 
-            : null;
-
-        $first_contact_date = $request->first_contact_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->first_contact_date)->format('Y-m-d') 
-            : null;
-
-        $second_contact_date = $request->second_contact_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->second_contact_date)->format('Y-m-d') 
-            : null;
-
-        $third_contact_date = $request->third_contact_date 
-            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->third_contact_date)->format('Y-m-d') 
-            : null;
+        $inquiry_date = $this->parseDate($request->inquiry_date);
+        $first_contact_date = $this->parseDate($request->first_contact_date);
+        $second_contact_date = $this->parseDate($request->second_contact_date);
+        $third_contact_date = $this->parseDate($request->third_contact_date);
+    
+        // Offers
+        $communication_date = $this->parseDate($request->communication_date);
+        $sample_dispatched_date = $this->parseDate($request->sample_dispatched_date);
+        $sample_received_date = $this->parseDate($request->sample_received_date);
 
         $international_inquiry->update([
             'inquiry_number' => $validated['inquiry_number'],
@@ -354,16 +440,53 @@ class InternationalInquiryController extends Controller
 
         ]);
 
+        $offerData = $request->input('offer_data', []);
+
+        $international_offer = null;
+        if ($international_inquiry->status == 1 && isset($offerData['offer_number'])) {
+            $international_offer = InternationalOffer::updateOrCreate(
+                ['international_inquiry_id' => $international_inquiry->id],
+                [
+                    'offer_number' => $offerData['offer_number'],
+                    'communication_date' => $offerData['communication_date'] ?? null,
+                    'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
+                    'sample_dispatched_date' => $offerData['sample_dispatched_date'] ?? null,
+                    'sample_sent_through' => $offerData['sample_sent_through'] ?? null,
+                    'sample_received_date' => $offerData['sample_received_date'] ?? null,
+                    'offer_notes' => $offerData['offer_notes'] ?? null,
+                ]
+            );
+        }else {
+            $international_offer = null;
+        }
+    
+
         return response()->json([
-            'message' => 'International Inquiry updated successfully.',
-            'international_inquiry' =>$international_inquiry
+            'message' => 'Inquiry updated successfully.',
+            'international_inquiry' =>$international_inquiry,
+            'international_offer' => $international_offer
         ], 200);
+
+    }
+
+    public function offerInternationalCancellations()
+    {
+
+        $offer_international_cancellations = InternationInquiry::where('status', 1)
+            ->where('offers_status', 0)
+            ->whereNotIn('mobile_number', function ($subquery) {
+                $subquery->select('mobile_number')->from('blocked_international_offers');
+            })
+            ->get();
+    
+        return response()->json($offer_international_cancellations);
+
     }
 
     public function updateInternationInquiryStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|boolean',
+            'status' => 'required|integer',
         ]);
 
         $inquiry = InternationInquiry::findOrFail($id);
@@ -373,6 +496,30 @@ class InternationalInquiryController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Inquiry status updated successfully.'
+        ]);
+    }
+
+    public function updateInternationalOfferStatus(Request $request, $id)
+    {
+        $request->validate([
+            'offers_status' => 'nullable|boolean',
+        ]);
+        $international_inquiry = InternationInquiry::findOrFail($id);
+
+        if($international_inquiry->status == 1){
+            $international_inquiry->offers_status = $request->offers_status;
+            $international_inquiry->save();
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Offer status updated successfully.',
+                'offers_status' => $international_inquiry->offers_status,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Offer status updated successfully.',
         ]);
     }
     /**

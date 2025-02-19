@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Inquiry;
+use App\Models\InternationInquiry;
 
-class Offer extends Model
+class InternationalOffer extends Model
 {
-    protected $table = 'offers';
+    protected $table = 'international_offers';
 
     protected $fillable = [
         'offer_number',
@@ -17,12 +17,12 @@ class Offer extends Model
         'sample_sent_through',
         'sample_received_date',
         'offer_notes',
-        'inquiry_id',
+        'international_inquiry_id',
     ];
 
     public function inquiry()
     {
-        return $this->belongsTo(Inquiry::class, 'inquiry_id');
+        return $this->belongsTo(InternationInquiry::class, 'international_inquiry_id');
     }
 
 }

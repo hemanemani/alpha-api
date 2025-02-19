@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\InternationalOffer;
+use App\Models\User;
 
 class InternationInquiry extends Model
 {
@@ -26,10 +28,15 @@ class InternationInquiry extends Model
         'third_response',
         'notes',
         'user_id',
-        'status'
+        'status',
+        'offers_status'
     ];
     public function user()
     {
         return $this->belongsTo(User::class,'user_id');
+    }
+    public function international_offers()
+    {
+        return $this->hasMany(InternationalOffer::class, 'international_inquiry_id');
     }
 }

@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('offers', function (Blueprint $table) {
-            $table->unsignedInteger('inquiry_id');
-            $table->foreign('inquiry_id')->references('id')->on('inquiries')->onDelete('cascade');
+        Schema::create('blocked_international_offers', function (Blueprint $table) {
+            $table->id();
+            $table->string('mobile_number')->unique();
+            $table->timestamps();
         });
     }
 
@@ -22,8 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('offers', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('blocked_international_offers');
     }
 };

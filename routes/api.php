@@ -55,6 +55,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/international-inquiries/{id}/update-international-inquiry-status', [InternationalInquiryController::class, 'updateInternationInquiryStatus'])->name('inquiries.updateInternationInquiryStatus');
     Route::get('/international-template-download', [InternationalInquiryController::class, 'downloadTemplate'])->name('international.download.template');
     Route::post('/international-inquiries/bulk-upload', [InternationalInquiryController::class, 'bulkUpload'])->name('international.inquiries.bulkUpload');
+    Route::post('/block-international-inquiry/{id}', [InternationalInquiryController::class, 'blockInternationalInquiry']);
+
+    //offers & cancellations
+
+    Route::get('/inquiries/{id}/with-offers', [InquiryController::class,'getInquiryWithOffers']);
+    Route::get('/international-inquiries/{id}/with-offers', [InternationalInquiryController::class,'getInternationalInquiryWithOffers']);
+
+    Route::get('/offer-domestic-cancellations', [InquiryController::class, 'offerDomesticCancellations'])->name('offer.domestic.cancellations');
+    Route::get('/offer-international-cancellations', [InternationalInquiryController::class, 'offerInternationalCancellations'])->name('offer.international.cancellations');
+
+    Route::patch('/offers/{id}/update-offer-status', [InquiryController::class, 'updateOfferStatus'])->name('offers.updateOfferStatus');
+    Route::patch('/offers/{id}/update-international-offer-status', [InternationalInquiryController::class, 'updateInternationalOfferStatus'])->name('offers.updateInternationalOfferStatus');
+
+    Route::post('/block-offer/{id}', [InquiryController::class, 'blockOffer']);
+    Route::post('/block-international-offer/{id}', [InternationalInquiryController::class, 'blockInternationalOffer']);
 
 });
 

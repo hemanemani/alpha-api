@@ -85,8 +85,8 @@ class DashboardController extends Controller
             $customInterInquiryDateRange = InternationInquiry::whereBetween('created_at', [$startDate, $endDate])->count();
         }
 
-        $inquiryCount = Inquiry::whereNull('status')->count();
-        $interInquiryCount = InternationInquiry::whereNull('status')->count();
+        $inquiryCount = Inquiry::where('status','2')->count();
+        $interInquiryCount = InternationInquiry::where('status','2')->count();
 
         $inquiryOffersCount = Inquiry::where('status','1')->count();
         $interInquiryOffersCount = InternationInquiry::where('status','1')->count();

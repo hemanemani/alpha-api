@@ -29,7 +29,8 @@ class Inquiry extends Model
         'third_response',
         'notes',
         'user_id',
-        'status'
+        'status',
+        'offers_status'
     ];
     public function user()
     {
