@@ -637,6 +637,7 @@ class InquiryController extends Controller
                 'file_path' => asset($filePath), // Convert to full URL for frontend
                 'file_size' => $fileSize, // Return file size
                 'status'    => 'Uploaded',
+                'file_name' => $fileName
             ], 200);
         
         } catch (\Exception $e) {

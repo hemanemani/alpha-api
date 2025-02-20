@@ -58,8 +58,6 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
             \Log::error("Error parsing first_contact_date: " . $e->getMessage());
         }
     
-        // Log the date values for debugging
-        \Log::info('Parsed dates', ['inquiry_date' => $inquiry_date, 'first_contact_date' => $first_contact_date]);
     
         $second_contact_date = !empty($row['second_contact_date']) 
             ? $this->parseDate($row['second_contact_date']) 
