@@ -12,6 +12,9 @@ use Carbon\Carbon;
 use Exception;
 use App\Models\InternationalOffer;
 use App\Models\BlockedInternationalOffer;
+use App\Models\UploadInternationalInquiry;
+use Illuminate\Support\Facades\Auth;
+
 
 class InternationalInquiryController extends Controller
 {
@@ -578,32 +581,101 @@ class InternationalInquiryController extends Controller
      * )
      */
     
+
     public function bulkUpload(Request $request)
     {
-        try {
-            $request->validate([
-                'file' => 'required|mimes:csv,txt|max:2048',
-            ]);
-    
-            Excel::import(new InternationalInquiryImport, $request->file('file'));
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'International Inquiries imported successfully.',
-            ], 200);
-    
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'There was an error during import.',
-                'error' => $e->getMessage(),
-            ], 500);        }
+         try {
+             $request->validate([
+                 'file' => 'required|mimes:csv,txt|max:2048',
+             ]);
+         
+             $user = Auth::user();
+             $file = $request->file('file');
+             $fileName = time() . '_' . $file->getClientOriginalName();
+             $filePath = 'uploads/' . $fileName;
+             $fileSize = $file->getSize(); // Size in bytes
+ 
+         
+             // Move the file to the public/uploads directory
+             $file->move(public_path('uploads'), $fileName);
+         
+             // Ensure the file exists after move operation
+             if (!file_exists(public_path($filePath))) {
+                 return response()->json([
+                     'success' => false,
+                     'message' => 'File upload failed.',
+                     'status'  => 'Upload failed',
+                 ], 500);
+             }
+ 
+             $import = new InternationalInquiryImport();
+             Excel::import($import, public_path($filePath));
+ 
+             if (!empty($import->getErrors())) {
+                 return response()->json([
+                     'success' => false,
+                     'message' => 'Upload failed with errors.',
+                     'errors'  => $import->getErrors()
+                 ], 422);
+             }
+             
+     
+             
+             // Store upload record in the database
+             UploadInternationalInquiry::create([
+                 'uploaded_by' => $user->id,
+                 'file_name'   => $file->getClientOriginalName(),
+                 'file_path'   => $filePath,
+                 'uploaded_at' => now(),
+                 'status'      => 'Uploaded',
+                 'file_size'   => $fileSize
+             ]);
+         
+             return response()->json([
+                 'success'   => true,
+                 'message'   => 'Upload successful!',
+                 'file_path' => asset($filePath), // Convert to full URL for frontend
+                 'file_size' => $fileSize, // Return file size
+                 'status'    => 'Uploaded',
+                 'file_name' => $fileName
+             ], 200);
+         
+         } catch (\Exception $e) {
+             return response()->json([
+                 'success' => false,
+                 'message' => 'There was an error during import.',
+                 'error'   => $e->getMessage(),
+                 'status'  => 'Upload failed',
+             ], 500);
+         }
+         
+    }
+
+    public function bulkUploadData(){
+        $uploadinternationalinquirydata = UploadInternationalInquiry::with('user:id,name')->get();
+        return response()->json($uploadinternationalinquirydata);
+    }
+
+    public function uploadDestroy($id)
+    {
+        $uploadInternationalInquiry = UploadInternationalInquiry::find($id);
+        if (!$uploadInternationalInquiry) {
+            return response()->json(['message' => 'Item not found'], 404);
+        }
+
+        $uploadInternationalInquiry->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Upoaded Data deleted successfully.',
+        ], 200);
     }
     
     
     public function downloadTemplate()
     {
         $headers = [
+            'id',
             'inquiry_number',
             'mobile_number',
             'inquiry_date',

@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/international-inquiries/{id}/update-international-inquiry-status', [InternationalInquiryController::class, 'updateInternationInquiryStatus'])->name('inquiries.updateInternationInquiryStatus');
     Route::get('/international-template-download', [InternationalInquiryController::class, 'downloadTemplate'])->name('international.download.template');
     Route::post('/international-inquiries/bulk-upload', [InternationalInquiryController::class, 'bulkUpload'])->name('international.inquiries.bulkUpload');
+    Route::get('/bulk-international-data', [InternationalInquiryController::class, 'bulkUploadData'])->name('international.inquiries.bulkUpload.data');
+    Route::delete('/bulk-international-data/{id}', [InternationalInquiryController::class, 'uploadDestroy']);
     Route::post('/block-international-inquiry/{id}', [InternationalInquiryController::class, 'blockInternationalInquiry']);
 
     //offers & cancellations

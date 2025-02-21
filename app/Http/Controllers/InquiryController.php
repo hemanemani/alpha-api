@@ -675,6 +675,7 @@ class InquiryController extends Controller
     public function downloadTemplate()
     {
         $headers = [
+            'id',
             'inquiry_number',
             'mobile_number',
             'inquiry_date',

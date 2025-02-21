@@ -1,6 +1,0 @@
-id,inquiry_number,mobile_number,inquiry_date,product_categories,specific_product,name,location,inquiry_through,inquiry_reference,first_contact_date,first_response,second_contact_date,second_response,third_contact_date,third_response,notes
-1,1,7894561230,10-12-2023,Lotus,Org Lotus,,Surat,Fac,DM,05-02-2024,Rates are pend,02-05-2024,Not availabel,NULL,NULL,Customer is
-2,2,9999999999,01-04-2024,Honey,,Amit P,Ahmedbad,Inst,Call,10-02-2023,The custom,04-12-2024,The vendor i,NULL,NULL,Vendor not
-3,3,8888888888,03-09-2024,,Green Org,Raj P,Mumbai,What,Mess,04-12-2022,Vendor is ask,10-04-2023,Customer is ask,02-02-2024,Its not ther,The customer iss
-4,4,7777777777,,Water,Orgenik,Hema,Andhra Pradesh,hello,DM,05-12-2022,custom,11-04-2023,Bye Bye,NULL,NULL,say bye
-5,5,,05-09-2024,Curd,Orgenik Bulk,Ananya,Telangana,how are you,Mess,06-12-2022,excuse me,12-04-2023,Hello,NULL,NULL,hello how are you

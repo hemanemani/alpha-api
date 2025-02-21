@@ -29,11 +29,12 @@ class User extends Authenticatable
         'mobile_number',
         'access_level',
         'allowed_pages',
-        'status'
+        'status',
+        'is_admin'
     ];
 
     protected $attributes = [
-        'is_admin' => false,
+        'is_admin' => 'boolean',
     ];
     
 

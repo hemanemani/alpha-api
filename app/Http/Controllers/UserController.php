@@ -94,6 +94,7 @@ class UserController extends Controller
             'mobile_number' => 'required|string|max:255',
             'access_level' => 'required|in:full,view,limited',
             'allowed_pages' => 'nullable|array',
+            'is_admin'      => 'boolean'
         ]);
         $user = User::create([
             'name' => $validated['name'],
@@ -103,6 +104,8 @@ class UserController extends Controller
             'mobile_number' => $validated['mobile_number'],
             'access_level' => $validated['access_level'],
             'allowed_pages' => $validated['access_level'] === 'limited' ? $validated['allowed_pages'] : [],
+            'is_admin'  => $request->is_admin,
+
         ]);
              // Log the user created
         return response()->json([
@@ -221,6 +224,7 @@ class UserController extends Controller
             'mobile_number' => 'required|string|max:255',
             'access_level' => 'required|in:full,view,limited',
             'allowed_pages' => 'nullable|array',
+            'is_admin'      => 'boolean'
         ]);
 
         $user->update([
@@ -230,7 +234,7 @@ class UserController extends Controller
             'user_name' => $request->user_name,
             'access_level' => $request->access_level,
             'allowed_pages' => $request->access_level === 'limited' ? $request->allowed_pages : [], // Check the access_level of the user being updated
-
+            'is_admin'  => $request->is_admin,
         ]);
 
         if ($request->filled('password')) {
