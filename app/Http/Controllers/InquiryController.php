@@ -9,12 +9,12 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\UploadInquiry;
-use App\Models\blockedInquiry;
+use App\Models\BlockedInquiry;
 use App\Models\Offer;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use App\Models\blockedOffer;
+use App\Models\BlockedOffer;
 use Illuminate\Support\Facades\Schema;
 
 
@@ -188,7 +188,6 @@ class InquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-            'status' => 'required|integer',
         ]);
 
         if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() ) {
@@ -229,7 +228,6 @@ class InquiryController extends Controller
             'third_response' => $validated['third_response'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
-            'status' => $validated['status']
         ]);
         return response()->json([
             'success' => true,
@@ -411,17 +409,22 @@ class InquiryController extends Controller
 
         ]);
 
+        
+        $inquiry_date = !empty($request->inquiry_date) && strtotime($request->inquiry_date)
+        ? \Carbon\Carbon::parse($request->inquiry_date)->format('Y-m-d') 
+        : null;
 
-        $inquiry_date = $this->parseDate($request->inquiry_date);
-        $first_contact_date = $this->parseDate($request->first_contact_date);
-        $second_contact_date = $this->parseDate($request->second_contact_date);
-        $third_contact_date = $this->parseDate($request->third_contact_date);
-    
-        // Offers
-        $communication_date = $this->parseDate($request->communication_date);
-        $sample_dispatched_date = $this->parseDate($request->sample_dispatched_date);
-        $sample_received_date = $this->parseDate($request->sample_received_date);
-    
+        $first_contact_date = !empty($request->first_contact_date) && strtotime($request->first_contact_date)
+        ? \Carbon\Carbon::parse($request->first_contact_date)->format('Y-m-d') 
+        : null;
+
+        $second_contact_date = !empty($request->second_contact_date) && strtotime($request->second_contact_date)
+        ? \Carbon\Carbon::parse($request->second_contact_date)->format('Y-m-d') 
+        : null;
+
+        $third_contact_date = !empty($request->third_contact_date) && strtotime($request->third_contact_date)
+        ? \Carbon\Carbon::parse($request->third_contact_date)->format('Y-m-d') 
+        : null;
 
         $inquiry->update([
             'inquiry_number' => $validated['inquiry_number'] ?? $inquiry->inquiry_number,
@@ -444,18 +447,33 @@ class InquiryController extends Controller
             'status' => $validated['status']
         ]);
 
+          // Offers
+        
+
         $offerData = $request->input('offer_data', []);
+        $communication_date = isset($offerData['communication_date']) 
+        ? \Carbon\Carbon::parse($offerData['communication_date']) // Direct parsing
+        : null;
+
+        $sample_dispatched_date = isset($offerData['sample_dispatched_date']) 
+            ? \Carbon\Carbon::parse($offerData['sample_dispatched_date']) 
+            : null;
+
+        $sample_received_date = isset($offerData['sample_received_date']) 
+            ? \Carbon\Carbon::parse($offerData['sample_received_date']) 
+            : null;    
+
         $offer = null;
         if ($inquiry->status == 1 && isset($offerData['offer_number'])) {
             $offer = Offer::updateOrCreate(
                 ['inquiry_id' => $inquiry->id],
                 [
                     'offer_number' => $offerData['offer_number'],
-                    'communication_date' => $offerData['communication_date'] ?? null,
+                    'communication_date' => $communication_date,
                     'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
-                    'sample_dispatched_date' => $offerData['sample_dispatched_date'] ?? null,
+                    'sample_dispatched_date' => $sample_dispatched_date,
                     'sample_sent_through' => $offerData['sample_sent_through'] ?? null,
-                    'sample_received_date' => $offerData['sample_received_date'] ?? null,
+                    'sample_received_date' => $sample_received_date,
                     'offer_notes' => $offerData['offer_notes'] ?? null,
                 ]
             );

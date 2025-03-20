@@ -187,7 +187,6 @@ class InternationalInquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-            'status' => "required|boolean"
 
         ]);
 
@@ -229,7 +228,6 @@ class InternationalInquiryController extends Controller
             'third_response' => $validated['third_response'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
-            'status' => $validated['status'],
 
         ]);
         return response()->json([
@@ -416,11 +414,6 @@ class InternationalInquiryController extends Controller
         $second_contact_date = $this->parseDate($request->second_contact_date);
         $third_contact_date = $this->parseDate($request->third_contact_date);
     
-        // Offers
-        $communication_date = $this->parseDate($request->communication_date);
-        $sample_dispatched_date = $this->parseDate($request->sample_dispatched_date);
-        $sample_received_date = $this->parseDate($request->sample_received_date);
-
         $international_inquiry->update([
             'inquiry_number' => $validated['inquiry_number'],
             'mobile_number' => $validated['mobile_number'],
@@ -445,17 +438,30 @@ class InternationalInquiryController extends Controller
 
         $offerData = $request->input('offer_data', []);
 
+        $communication_date = isset($offerData['communication_date']) 
+        ? \Carbon\Carbon::parse($offerData['communication_date']) // Direct parsing
+        : null;
+
+        $sample_dispatched_date = isset($offerData['sample_dispatched_date']) 
+            ? \Carbon\Carbon::parse($offerData['sample_dispatched_date']) 
+            : null;
+
+        $sample_received_date = isset($offerData['sample_received_date']) 
+            ? \Carbon\Carbon::parse($offerData['sample_received_date']) 
+            : null;    
+
+
         $international_offer = null;
         if ($international_inquiry->status == 1 && isset($offerData['offer_number'])) {
             $international_offer = InternationalOffer::updateOrCreate(
                 ['international_inquiry_id' => $international_inquiry->id],
                 [
                     'offer_number' => $offerData['offer_number'],
-                    'communication_date' => $offerData['communication_date'] ?? null,
+                    'communication_date' => $communication_date,
                     'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
-                    'sample_dispatched_date' => $offerData['sample_dispatched_date'] ?? null,
+                    'sample_dispatched_date' => $sample_dispatched_date,
                     'sample_sent_through' => $offerData['sample_sent_through'] ?? null,
-                    'sample_received_date' => $offerData['sample_received_date'] ?? null,
+                    'sample_received_date' => $sample_received_date,
                     'offer_notes' => $offerData['offer_notes'] ?? null,
                 ]
             );

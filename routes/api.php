@@ -12,6 +12,8 @@ use App\Http\Controllers\DashboardController;
 use Laravel\Sanctum\Sanctum;
 use App\Http\Middleware\CheckAccessLevel;
 use App\Http\Controllers\OfferController;
+use App\Http\Controllers\AnalyticsController;
+
 
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
@@ -35,7 +37,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
     Route::post('/update-status/{id}',[UserController::class,'updateStatus']);
 
-    Route::get('/refresh', [DashboardController::class, 'refresh_all']);
+    Route::get('/refresh-all', [DashboardController::class, 'refresh_all']);
 
 
     Route::resource('inquiries',InquiryController::class);
@@ -72,6 +74,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/block-offer/{id}', [InquiryController::class, 'blockOffer']);
     Route::post('/block-international-offer/{id}', [InternationalInquiryController::class, 'blockInternationalOffer']);
+
+    Route::get('/analytics/inquiries', [AnalyticsController::class, 'getInquiryData']);
+    Route::get('/analytics/offers', [AnalyticsController::class, 'getOffersData']);
+
+    Route::get('/analytics/total-inquiries', [AnalyticsController::class, 'getTotalInquiries']);
+
+
 
 });
 
