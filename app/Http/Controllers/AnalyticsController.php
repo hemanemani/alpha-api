@@ -42,6 +42,7 @@ class AnalyticsController extends Controller
     
         }
         $domesticData = Inquiry::selectRaw('DATE(created_at) as date, COUNT(*) as dom_count')
+        ->where('status', 2)
         ->whereBetween('created_at', [$from, $to])
         ->groupBy('date')
         ->orderBy('date')
@@ -49,6 +50,7 @@ class AnalyticsController extends Controller
         ->keyBy('date');
 
         $internationalData = InternationInquiry::selectRaw('DATE(created_at) as date, COUNT(*) as int_count')
+        ->where('status', 2)
         ->whereBetween('created_at', [$from, $to])
         ->groupBy('date')
         ->orderBy('date')
@@ -149,16 +151,16 @@ class AnalyticsController extends Controller
 
     public function getTotalInquiries(Request $request) {
         // Get total inquiries (domestic + international)
-        $totalDomestic = Inquiry::count();
-        $totalInternational = InternationInquiry::count();
+        $totalDomestic = Inquiry::where('status','2')->count();
+        $totalInternational = InternationInquiry::where('status','2')->count();
         $totalInquiries = $totalDomestic + $totalInternational;
     
         // Get inquiries from last month
         $lastMonthStart = Carbon::now()->subMonth()->startOfMonth()->toDateString();
         $lastMonthEnd = Carbon::now()->subMonth()->endOfMonth()->toDateString();
     
-        $lastMonthDomestic = Inquiry::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
-        $lastMonthInternational = InternationInquiry::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
+        $lastMonthDomestic = Inquiry::where('status',2)->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
+        $lastMonthInternational = InternationInquiry::where('status',2)->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
         $lastMonthInquiries = $lastMonthDomestic + $lastMonthInternational;
     
 
