@@ -34,7 +34,7 @@ class User extends Authenticatable
     ];
 
     protected $attributes = [
-        'is_admin' => 'boolean',
+        'is_admin' => 'integer',
     ];
     
 

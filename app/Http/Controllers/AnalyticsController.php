@@ -27,15 +27,15 @@ class AnalyticsController extends Controller
                     $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
                     break;
                 case "Last 30 days":
-                    $from = Carbon::now()->subDays(29)->startOfDay()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
-                    break;
-                case "Last month":
                     $from = Carbon::now()->subMonth()->startOfMonth()->toDateTimeString();
                     $to = Carbon::now()->subMonth()->endOfMonth()->toDateTimeString();
                     break;
                 case "Last 3 months":
                     $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateTimeString();
+                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    break;
+                case "Last 6 months":
+                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateTimeString();
                     $to = Carbon::today()->endOfDay()->toDateTimeString();
                     break;
             }
@@ -95,15 +95,15 @@ class AnalyticsController extends Controller
                     $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
                     break;
                 case "Last 30 days":
-                    $from = Carbon::now()->subDays(29)->startOfDay()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
-                    break;
-                case "Last month":
                     $from = Carbon::now()->subMonth()->startOfMonth()->toDateTimeString();
                     $to = Carbon::now()->subMonth()->endOfMonth()->toDateTimeString();
                     break;
                 case "Last 3 months":
                     $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateTimeString();
+                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    break;
+                case "Last 6 months":
+                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateTimeString();
                     $to = Carbon::today()->endOfDay()->toDateTimeString();
                     break;
             }

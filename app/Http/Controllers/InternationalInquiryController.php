@@ -171,14 +171,14 @@ class InternationalInquiryController extends Controller
     {
         $validated = $request->validate([
             'inquiry_number' => 'required',
-            'mobile_number' => 'required',
+            'mobile_number' => 'required|string',
             'inquiry_date' => 'required|date',
-            'product_categories' => 'required|string',
-            'specific_product' => 'required|string',
+            'product_categories' => 'nullable|string',
+            'specific_product' => 'nullable|string',
             'name' => 'required|string',
-            'location' => 'required|string',
-            'inquiry_through' => 'required|string',
-            'inquiry_reference' => 'required|string',
+            'location' => 'nullable|string',
+            'inquiry_through' => 'nullable|string',
+            'inquiry_reference' => 'nullable|string',
             'first_contact_date' => 'required|date',
             'first_response' => 'required|string',
             'second_contact_date' => 'nullable|date',
@@ -187,7 +187,6 @@ class InternationalInquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-
         ]);
 
         if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() ) {
@@ -380,12 +379,12 @@ class InternationalInquiryController extends Controller
             'inquiry_number' => 'sometimes|integer',
             'mobile_number' => 'sometimes|string',
             'inquiry_date' => 'sometimes|date',
-            'product_categories' => 'sometimes|string',
-            'specific_product' => 'sometimes|string',
+            'product_categories' => 'nullable|string',
+            'specific_product' => 'nullable|string',
             'name' => 'sometimes|string',
-            'location' => 'sometimes|string',
-            'inquiry_through' => 'sometimes|string',
-            'inquiry_reference' => 'sometimes|string',
+            'location' => 'nullable|string',
+            'inquiry_through' => 'nullable|string',
+            'inquiry_reference' => 'nullable|string',
             'first_contact_date' => 'sometimes|date',
             'first_response' => 'sometimes|string',
             'second_contact_date' => 'nullable|date',
@@ -394,7 +393,9 @@ class InternationalInquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'sometimes|exists:users,id',
-            'status' => 'sometimes|integer',
+            'status' => 'nullable|integer',
+            
+            
 
             //offers
             'international_inquiry_id' => 'sometimes|exists:international_inquiries,id',

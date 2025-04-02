@@ -2,11 +2,9 @@
     <ul class="nav nav-pills flex-column mb-sm-auto mb-0" id="menu">
         
         <li>
-            @if(auth()->user()->is_admin === 1)
                 <a href="{{ route('users.index') }}" class="nav-link px-0 align-middle text-white {{ Request::routeIs('users.*') ? 'active' : '' }}">
                     <i class="fs-5 bi bi-person"></i> <span class="ms-1 d-none d-sm-inline">Users</span>
                 </a>
-            @endif
         </li>
 
         <!-- Menu for Inquiries -->

@@ -12,7 +12,7 @@ class CheckIfAdmin
         // Check if the user is an admin
         if (auth()->check() && auth()->user()->is_admin !== 1) {
             // Redirect non-admin users to a different page, e.g., home
-            return redirect('/');
+            return redirect('/dashboard');
         }
 
         return $next($request);

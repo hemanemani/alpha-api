@@ -94,7 +94,7 @@ class UserController extends Controller
             'mobile_number' => 'required|string|max:255',
             'access_level' => 'required|in:full,view,limited',
             'allowed_pages' => 'nullable|array',
-            'is_admin'      => 'boolean'
+            'is_admin'      => 'integer'
         ]);
         $user = User::create([
             'name' => $validated['name'],
@@ -224,7 +224,7 @@ class UserController extends Controller
             'mobile_number' => 'required|string|max:255',
             'access_level' => 'required|in:full,view,limited',
             'allowed_pages' => 'nullable|array',
-            'is_admin'      => 'boolean'
+            'is_admin'      => 'integer'
         ]);
 
         $user->update([

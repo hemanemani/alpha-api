@@ -32,13 +32,11 @@
                     <td>{{ $user->password }}</td>
                     <td>
                         <a href="{{ route('users.edit', $user) }}" class="btn btn-warning btn-sm">Edit</a>
-                         @if ($user->is_admin != 1)
                         <form action="{{ route('users.destroy', $user) }}" method="POST" style="display:inline-block;">
                             @csrf
                             @method('DELETE')
                             <button class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
                         </form>
-                        @endif
                     </td>
                 </tr>
             @endforeach
