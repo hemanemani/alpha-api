@@ -27,8 +27,8 @@ class AnalyticsController extends Controller
                     $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
                     break;
                 case "Last 30 days":
-                    $from = Carbon::now()->subMonth()->startOfMonth()->toDateTimeString();
-                    $to = Carbon::now()->subMonth()->endOfMonth()->toDateTimeString();
+                    $from = Carbon::now()->subDays(30)->startOfDay()->toDateTimeString();
+                    $to = Carbon::now()->endOfDay()->toDateTimeString();
                     break;
                 case "Last 3 months":
                     $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateTimeString();
@@ -95,8 +95,8 @@ class AnalyticsController extends Controller
                     $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
                     break;
                 case "Last 30 days":
-                    $from = Carbon::now()->subMonth()->startOfMonth()->toDateTimeString();
-                    $to = Carbon::now()->subMonth()->endOfMonth()->toDateTimeString();
+                    $from = Carbon::now()->subDays(30)->startOfDay()->toDateTimeString();
+                    $to = Carbon::now()->endOfDay()->toDateTimeString();
                     break;
                 case "Last 3 months":
                     $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateTimeString();

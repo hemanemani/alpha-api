@@ -5,6 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Inquiry;
 use App\Models\InternationInquiry;
+use App\Models\Offer;
+use App\Models\InternationalOffer;
+use App\Models\BlockedInquiry;
+use App\Models\BlockedInternationalInquiry;
+use App\Models\BlockedOffer;
+use App\Models\BlockedInternationalOffer;
+use App\Models\UploadInquiry;
+use App\Models\UploadInternationalInquiry;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -120,6 +128,52 @@ class DashboardController extends Controller
             ],
         ]);
 
-    }        
+    } 
+    public function deleteAllData(Request $request)
+    {
+        try {
+            $hasData =
+            Inquiry::exists() ||
+            InternationInquiry::exists() ||
+            Offer::exists() ||
+            InternationalOffer::exists() ||
+            BlockedInquiry::exists() ||
+            BlockedInternationalInquiry::exists() ||
+            BlockedOffer::exists() ||
+            BlockedInternationalOffer::exists() ||
+            UploadInquiry::exists() ||
+            UploadInternationalInquiry::exists();
+
+        if (!$hasData) {
+            return response()->json(['message' => 'No data to delete.'], 200);
+        }
+
+            DB::beginTransaction();
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+            // Delete related records
+            Inquiry::truncate();
+            InternationInquiry::truncate();
+            Offer::truncate();
+            InternationalOffer::truncate();
+            BlockedInquiry::truncate();
+            BlockedInternationalInquiry::truncate();
+            BlockedOffer::truncate();
+            BlockedInternationalOffer::truncate();
+            UploadInquiry::truncate();
+            UploadInternationalInquiry::truncate();    
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
+            DB::commit();
+            return response()->json(['message' => 'All dashboard data deleted successfully.'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to delete data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+       
 }
 

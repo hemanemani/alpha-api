@@ -21,7 +21,8 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
     {
         $validator = Validator::make($row, [
             'inquiry_number'     => 'required',
-            'mobile_number'      => 'required|digits:10',
+            // 'mobile_number'      => 'required|digits:10',
+            'mobile_number'      => 'required',
             'inquiry_date'       => 'required|date_format:d-m-Y',
             'product_categories' => 'required|string',
             'specific_product'   => 'required|string',

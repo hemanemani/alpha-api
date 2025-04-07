@@ -80,6 +80,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/analytics/total-inquiries', [AnalyticsController::class, 'getTotalInquiries']);
 
+    Route::delete('/dashboard/delete-all', [DashboardController::class, 'deleteAllData']);
+
 
 
 });
