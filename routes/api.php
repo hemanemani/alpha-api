@@ -13,7 +13,8 @@ use Laravel\Sanctum\Sanctum;
 use App\Http\Middleware\CheckAccessLevel;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\AnalyticsController;
-
+use App\Http\Controllers\SellerController;
+use App\Http\Controllers\ProductController;
 
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
@@ -83,6 +84,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/dashboard/delete-all', [DashboardController::class, 'deleteAllData']);
 
 
+    Route::resource('sellers',SellerController::class);
+
+    Route::resource('products',ProductController::class);
 
 });
 
