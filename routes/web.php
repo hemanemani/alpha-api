@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InquiryController;
+use App\Http\Controllers\InternationalInquiryController;
+
 
 Route::get('/', function () {
     return ['Laravel' => app()->version()];

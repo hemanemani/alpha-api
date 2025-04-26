@@ -2,6 +2,8 @@
 
 namespace App\Models;
 use App\Models\Product;
+use App\Models\Order;
+
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,5 +25,7 @@ class Seller extends Model
     public function products() {
         return $this->hasMany(Product::class);
     }
-    
+    public function order() {
+        return $this->belongsTo(Order::class);
+    } 
 }

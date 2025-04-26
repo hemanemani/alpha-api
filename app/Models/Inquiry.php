@@ -30,7 +30,8 @@ class Inquiry extends Model
         'notes',
         'user_id',
         'status',
-        'offers_status'
+        'offers_status',
+        'orders_status'
     ];
     public function user()
     {
@@ -40,5 +41,6 @@ class Inquiry extends Model
     {
         return $this->hasMany(Offer::class, 'inquiry_id');
     }
+
 
 }

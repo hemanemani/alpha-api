@@ -29,7 +29,8 @@ class InternationInquiry extends Model
         'notes',
         'user_id',
         'status',
-        'offers_status'
+        'offers_status',
+        'orders_status'
     ];
     public function user()
     {

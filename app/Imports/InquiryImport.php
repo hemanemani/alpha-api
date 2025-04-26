@@ -19,8 +19,15 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
 
     public function model(array $row)
     {
+        static $nextInquiryNumber = null;
+
+        if (is_null($nextInquiryNumber)) {
+            $nextInquiryNumber = Inquiry::max('inquiry_number') ?? 0;
+            $nextInquiryNumber++;
+        }
+    
+
         $validator = Validator::make($row, [
-            'inquiry_number'     => 'required',
             // 'mobile_number'      => 'required|digits:10',
             'mobile_number'      => 'required',
             'inquiry_date'       => 'required|date_format:d-m-Y',
@@ -70,7 +77,7 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
     
     
         return new Inquiry([
-            'inquiry_number'        => $row['inquiry_number'],
+            'inquiry_number'        => $nextInquiryNumber++,
             'mobile_number'         => $row['mobile_number'],
             'inquiry_date'          => $inquiry_date,
             'product_categories'    => $row['product_categories'],

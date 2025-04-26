@@ -147,4 +147,10 @@ class SellerController extends Controller
             'message' => 'Seller deleted successfully.',
         ], 200);
     }
+    public function getSellers()
+    {
+        $sellers = Seller::select('id', 'name','pickup_address','contact_number')->get();
+        return response()->json($sellers);
+    }
+
 }

@@ -16,6 +16,8 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use App\Models\BlockedOffer;
 use Illuminate\Support\Facades\Schema;
+use App\Rules\UniqueMobileAcrossTables;
+use App\Models\BlockedOrder;
 
 
 class InquiryController extends Controller
@@ -68,10 +70,17 @@ class InquiryController extends Controller
     public function approved_offers()
     {
         $approved_offers = Inquiry::where('status', 1)
-        ->whereNull('offers_status')
-        ->get();
-            return response()->json($approved_offers);
+            ->where('offers_status',2)
+            ->get()
+            ->map(function ($inquiry) {
+                $offer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();
+                $inquiry->offer_number = $offer?->offer_number ?? null;
+                return $inquiry;
+            });
+
+        return response()->json($approved_offers);
     }
+
 
     /**
      * @OA\Get(
@@ -168,6 +177,20 @@ class InquiryController extends Controller
     
     }
 
+    public function blockOrder(Request $request)
+    {
+
+        BlockedOrder::create([
+            'contact_number' => $request->contact_number,
+        ]);
+    
+        return response()->json([
+            'message' => 'Order blocked successfully.',
+            'success' => true,
+        ], 200);
+    
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -193,6 +216,12 @@ class InquiryController extends Controller
         if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() ) {
             return response()->json(['message' => 'This inquiry is blocked.'], 403);
         }
+
+
+        $request->validate([
+            'mobile_number' => ['required', new UniqueMobileAcrossTables],
+        ]);
+
 
         $inquiry_date = $request->inquiry_date 
             ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->inquiry_date)->format('Y-m-d') 
@@ -396,20 +425,22 @@ class InquiryController extends Controller
             'notes' => 'nullable|string',
             'user_id' => 'sometimes|exists:users,id',
             'status' => 'nullable|integer',
+            'offers_status' => 'nullable|integer',
 
             //offers
             'inquiry_id' => 'sometimes|exists:inquiries,id',
             'offer_number' => 'sometimes|string',
             'communication_date' => 'sometimes|date',
             'received_sample_amount' => 'sometimes|integer',
+            'sent_sample_amount' => 'sometimes|integer',
             'sample_dispatched_date' => 'sometimes|date',
             'sample_sent_through' => 'sometimes|string',
             'sample_received_date' => 'sometimes|date',
             'offer_notes' => 'sometimes|string',
-
+            'sample_send_address' => 'sometimes|string'
         ]);
 
-        
+      
         $inquiry_date = !empty($request->inquiry_date) && strtotime($request->inquiry_date)
         ? \Carbon\Carbon::parse($request->inquiry_date)->format('Y-m-d') 
         : null;
@@ -444,7 +475,8 @@ class InquiryController extends Controller
             'third_response' => $validated['third_response'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
-            'status' => $validated['status']
+            'status' => $validated['status'],
+            'offers_status' => $request->has('offers_status') ? $validated['offers_status'] : 2,
         ]);
 
           // Offers
@@ -471,10 +503,13 @@ class InquiryController extends Controller
                     'offer_number' => $offerData['offer_number'],
                     'communication_date' => $communication_date,
                     'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
+                    'sent_sample_amount' => $offerData['sent_sample_amount'] ?? null,
                     'sample_dispatched_date' => $sample_dispatched_date,
                     'sample_sent_through' => $offerData['sample_sent_through'] ?? null,
                     'sample_received_date' => $sample_received_date,
                     'offer_notes' => $offerData['offer_notes'] ?? null,
+                    'sample_send_address' => $offerData['sample_send_address'] ?? null,
+
                 ]
             );
         }else{
@@ -494,53 +529,97 @@ class InquiryController extends Controller
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_domestic_offers');
             })
-            ->get();
+            ->get()
+            ->map(function ($inquiry) {
+                $offer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();
+                $inquiry->offer_number = $offer?->offer_number ?? null;
+                return $inquiry;
+            });
 
         return response()->json($offer_domestic_cancellations);
     }
+
+    public function orderDomesticCancellations()
+{
+    $order_domestic_cancellations = Inquiry::where('status', 1)
+        ->where('offers_status', 1)
+        ->where('orders_status', 0)
+        ->whereNotIn('mobile_number', function ($subquery) {
+            $subquery->select('mobile_number')->from('blocked_orders');
+        })
+        ->get()
+        ->map(function ($inquiry) {
+            $offer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();
+
+            $order = $offer ? \App\Models\Order::where('offer_id', $offer->id)->first() : null;
+
+            $inquiry->order_number = $order?->order_number ?? null;
+
+            return $inquiry;
+        });
+
+    return response()->json($order_domestic_cancellations);
+}
 
 
     public function updateInquiryStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|integer',
+            'status' => 'nullable|integer',
+            'offers_status' => 'nullable|integer',
+            'orders_status' => 'nullable|integer'
         ]);
-
+    
         $inquiry = Inquiry::findOrFail($id);
         $inquiry->status = $request->status;
+        $inquiry->offers_status = $request->offers_status ?? $inquiry->offers_status;
+        $inquiry->orders_status = $request->orders_status ?? $inquiry->orders_status;
+
         $inquiry->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Inquiry status updated successfully.'
-        ]);
-    }
-
-    public function updateOfferStatus(Request $request, $id)
-    {
-        $request->validate([
-            'offers_status' => 'nullable|boolean',
-        ]);
-
-        $inquiry = Inquiry::findOrFail($id);
-
-        if ($inquiry->status == 1) {
-            $inquiry->offers_status = $request->offers_status;
-            $inquiry->save();
     
-            return response()->json([
-                'success' => true,
-                'message' => 'Offer status updated successfully.',
-                'offers_status' => $inquiry->offers_status,
-            ]);
+        $responseMessage = 'Status updated successfully.';
+    
+        if ($request->status == 0) {
+            $responseMessage = 'Inquiry moved to Cancellations.';
+        } elseif ($request->status == 1 && $inquiry->offers_status === 2) {
+            $lastOfferNumber = \App\Models\Offer::max('offer_number') ?? 0;
+            $newOfferNumber = $lastOfferNumber + 1;
+    
+            $offer = \App\Models\Offer::firstOrNew(['inquiry_id' => $inquiry->id]);
+            $offer->offer_number = $newOfferNumber;
+            $offer->inquiry_id = $inquiry->id;
+            $offer->save();
+    
+            $responseMessage = 'Inquiry moved to Offers and offer number created.';
+        } elseif ($request->status == 1 && $inquiry->offers_status === 0) {
+            $responseMessage = 'Inquiry moved to Offer Cancellations.';
+        } elseif ($request->status == 1 && $inquiry->offers_status === 1 && $inquiry->orders_status ===0) {
+            $responseMessage = 'Inquiry moved to Orders Cancellations.';
+        } elseif ($request->status == 1 && $inquiry->offers_status === 1) {
+            $lastOrderNumber = \App\Models\Order::max('order_number') ?? 56564;
+            $newOrderNumber = $lastOrderNumber + 1;
+    
+            $offer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();
+    
+            if ($offer) {
+                $order = \App\Models\Order::firstOrNew(['offer_id' => $offer->id]);
+                $order->order_number = $newOrderNumber;
+                $order->offer_id = $offer->id;
+                $order->save();
+    
+                $responseMessage = 'Inquiry moved to Orders and order number updated.';
+            } else {
+                $responseMessage = 'Offer not found for the inquiry.';
+            }
         }
     
-
         return response()->json([
             'success' => true,
-            'message' => 'Offer status updated successfully.',
+            'message' => 'Status updated successfully.',
+            'responseMessage' => $responseMessage
         ]);
     }
+    
 
 
     /**
@@ -693,8 +772,6 @@ class InquiryController extends Controller
     public function downloadTemplate()
     {
         $headers = [
-            'id',
-            'inquiry_number',
             'mobile_number',
             'inquiry_date',
             'product_categories',
@@ -780,6 +857,12 @@ class InquiryController extends Controller
             'success' => true,
             'message' => 'Inquiry deleted successfully.',
         ], 200);
+    }
+
+    public function getNextInquiryNumber()
+    {
+        $nextNumber = \App\Models\Inquiry::max('inquiry_number') + 1;
+        return response()->json(['next_inquiry_number' => $nextNumber]);
     }
 
     

@@ -15,7 +15,9 @@ use App\Http\Controllers\OfferController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\ProductController;
-
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\InternationalOrderController;
+use App\Http\Controllers\AdController;
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
@@ -40,6 +42,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/refresh-all', [DashboardController::class, 'refresh_all']);
 
+    Route::get('/inquiries/next-number', [InquiryController::class, 'getNextInquiryNumber']);
+
 
     Route::resource('inquiries',InquiryController::class);
     Route::get('/inquiry-approved-offers', [InquiryController::class, 'approved_offers'])->name('inquiry.approved.offers');
@@ -51,6 +55,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/bulk-domestic-data/{id}', [InquiryController::class, 'uploadDestroy']);
     Route::post('/block-inquiry/{id}', [InquiryController::class, 'blockInquiry']);
 
+
+
+    Route::get('/international_inquiries/next-number', [InternationalInquiryController::class, 'getNextInternationalInquiryNumber']);
 
     Route::resource('international_inquiries',InternationalInquiryController::class);
     Route::get('/inquiry-approved-international-offers', [InternationalInquiryController::class, 'approved_offers'])->name('inquiry.international.approved.offers');
@@ -70,9 +77,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/offer-domestic-cancellations', [InquiryController::class, 'offerDomesticCancellations'])->name('offer.domestic.cancellations');
     Route::get('/offer-international-cancellations', [InternationalInquiryController::class, 'offerInternationalCancellations'])->name('offer.international.cancellations');
 
-    Route::patch('/offers/{id}/update-offer-status', [InquiryController::class, 'updateOfferStatus'])->name('offers.updateOfferStatus');
-    Route::patch('/offers/{id}/update-international-offer-status', [InternationalInquiryController::class, 'updateInternationalOfferStatus'])->name('offers.updateInternationalOfferStatus');
-
     Route::post('/block-offer/{id}', [InquiryController::class, 'blockOffer']);
     Route::post('/block-international-offer/{id}', [InternationalInquiryController::class, 'blockInternationalOffer']);
 
@@ -85,8 +89,30 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::resource('sellers',SellerController::class);
+    Route::get('/seller-details', [SellerController::class, 'getSellers']);
+
 
     Route::resource('products',ProductController::class);
+
+    Route::resource('orders', OrderController::class);
+    Route::get('orders/by-offer/{offer_id}', [OrderController::class, 'showByOfferId']);
+    Route::post('orders/generate-invoice-pdf', [OrderController::class, 'generatePDF']);
+
+    Route::get('/order-domestic-cancellations', [InquiryController::class, 'orderDomesticCancellations'])->name('order.domestic.cancellations');
+
+
+
+    Route::resource('international-orders', InternationalOrderController::class);
+    Route::get('international-orders/by-offer/{offer_id}', [InternationalOrderController::class, 'showByOfferId']);
+    Route::post('international-orders/generate-invoice-pdf', [InternationalOrderController::class, 'generatePDF']);
+
+    Route::get('/order-international-cancellations', [InternationalOrderController::class, 'orderInternationalCancellations'])->name('order.international.cancellations');
+
+    Route::post('/block-order/{id}', [OrderController::class, 'blockOrder']);
+    Route::post('/block-international-order/{id}', [InternationalOrderController::class, 'blockInternationalOrder']);
+
+    Route::resource('ads', AdController::class);
+    Route::get('/international-ads',[AdController::class,'international_index']);
 
 });
 

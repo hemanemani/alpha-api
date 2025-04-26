@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('offer_number');
             $table->date('communication_date');
             $table->unsignedInteger('received_sample_amount');
+            $table->unsignedInteger('sent_sample_amount');
             $table->date('sample_dispatched_date');
             $table->string('sample_sent_through');
             $table->date('sample_received_date');

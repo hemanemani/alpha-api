@@ -13,10 +13,12 @@ class Offer extends Model
         'offer_number',
         'communication_date',
         'received_sample_amount',
+        'sent_sample_amount',
         'sample_dispatched_date',
         'sample_sent_through',
         'sample_received_date',
         'offer_notes',
+        'sample_send_address',
         'inquiry_id',
     ];
 

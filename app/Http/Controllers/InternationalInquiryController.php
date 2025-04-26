@@ -14,6 +14,8 @@ use App\Models\InternationalOffer;
 use App\Models\BlockedInternationalOffer;
 use App\Models\UploadInternationalInquiry;
 use Illuminate\Support\Facades\Auth;
+use App\Rules\UniqueMobileAcrossTables;
+use App\Models\BlockedInternationalOrder;
 
 
 class InternationalInquiryController extends Controller
@@ -67,9 +69,15 @@ class InternationalInquiryController extends Controller
     public function approved_offers()
     {
         $approved_offers = InternationInquiry::where('status', 1)
-        ->whereNull('offers_status')
-        ->get();
-            return response()->json($approved_offers);
+            ->where('offers_status',2)
+            ->get()
+            ->map(function ($international_inquiry) {
+                $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+                $international_inquiry->offer_number = $international_offer?->offer_number ?? null;
+                return $international_inquiry;
+            });
+
+        return response()->json($approved_offers);
     }
     /**
      * @OA\Get(
@@ -166,6 +174,20 @@ class InternationalInquiryController extends Controller
      
      }
 
+     public function blockInternationalOrder(Request $request)
+    {
+
+        BlockedInternationalOrder::create([
+            'contact_number' => $request->contact_number,
+        ]);
+    
+        return response()->json([
+            'message' => 'Order blocked successfully.',
+            'success' => true,
+        ], 200);
+    
+    }
+
 
     public function store(Request $request)
     {
@@ -192,6 +214,10 @@ class InternationalInquiryController extends Controller
         if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() ) {
             return response()->json(['message' => 'This inquiry is blocked.'], 403);
         }
+
+        $request->validate([
+            'mobile_number' => ['required', new UniqueMobileAcrossTables],
+        ]);
 
         $inquiry_date = $request->inquiry_date 
             ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->inquiry_date)->format('Y-m-d') 
@@ -402,13 +428,17 @@ class InternationalInquiryController extends Controller
             'offer_number' => 'sometimes|string',
             'communication_date' => 'sometimes|date',
             'received_sample_amount' => 'sometimes|integer',
+            'sent_sample_amount' => 'sometimes|integer',
             'sample_dispatched_date' => 'sometimes|date',
             'sample_sent_through' => 'sometimes|string',
             'sample_received_date' => 'sometimes|date',
             'offer_notes' => 'sometimes|string',
-            
+            'sample_send_address' => 'sometimes|string'
+
 
         ]);
+
+     
 
         $inquiry_date = $this->parseDate($request->inquiry_date);
         $first_contact_date = $this->parseDate($request->first_contact_date);
@@ -460,10 +490,13 @@ class InternationalInquiryController extends Controller
                     'offer_number' => $offerData['offer_number'],
                     'communication_date' => $communication_date,
                     'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
+                    'sent_sample_amount' => $offerData['sent_sample_amount'] ?? null,
                     'sample_dispatched_date' => $sample_dispatched_date,
                     'sample_sent_through' => $offerData['sample_sent_through'] ?? null,
                     'sample_received_date' => $sample_received_date,
                     'offer_notes' => $offerData['offer_notes'] ?? null,
+                    'sample_send_address' => $offerData['sample_send_address'] ?? null,
+
                 ]
             );
         }else {
@@ -487,51 +520,97 @@ class InternationalInquiryController extends Controller
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_international_offers');
             })
-            ->get();
-    
+            ->get()
+            ->map(function ($international_inquiry) {
+                $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+                $international_inquiry->offer_number = $international_offer?->offer_number ?? null;
+                return $international_inquiry;
+            });
+
         return response()->json($offer_international_cancellations);
 
+    }
+
+    public function orderInternationalCancellations()
+    {
+        $order_international_cancellations = InternationInquiry::where('status', 1)
+            ->where('offers_status', 1)
+            ->where('orders_status', 0)
+            ->whereNotIn('mobile_number', function ($subquery) {
+                $subquery->select('mobile_number')->from('blocked_international_orders');
+            })
+            ->get()
+            ->map(function ($international_inquiry) {
+                $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+
+                $international_order = $international_offer ? \App\Models\InternationalOrder::where('international_offer_id', $international_offer->id)->first() : null;
+
+                $international_inquiry->order_number = $international_order?->order_number ?? null;
+
+                return $international_inquiry;
+            });
+
+        return response()->json($order_international_cancellations);
     }
 
     public function updateInternationInquiryStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|integer',
-        ]);
-
-        $inquiry = InternationInquiry::findOrFail($id);
-        $inquiry->status = $request->status;
-        $inquiry->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Inquiry status updated successfully.'
-        ]);
-    }
-
-    public function updateInternationalOfferStatus(Request $request, $id)
-    {
-        $request->validate([
+            'status' => 'nullable|integer',
             'offers_status' => 'nullable|boolean',
+            'orders_status' => 'nullable|integer'
         ]);
+
         $international_inquiry = InternationInquiry::findOrFail($id);
+        $international_inquiry->status = $request->status;
+        $international_inquiry->offers_status = $request->offers_status ?? $international_inquiry->offers_status;
 
-        if($international_inquiry->status == 1){
-            $international_inquiry->offers_status = $request->offers_status;
-            $international_inquiry->save();
-    
-            return response()->json([
-                'success' => true,
-                'message' => 'Offer status updated successfully.',
-                'offers_status' => $international_inquiry->offers_status,
-            ]);
+        $international_inquiry->save();
+
+        $responseMessage = 'Status updated successfully.';
+
+        if ($request->status == 0) {
+            $responseMessage = 'Inquiry moved to Cancellations.';
+        } elseif ($request->status == 1  && $international_inquiry->offers_status === 2) {
+            $lastOfferNumber = \App\Models\InternationalOffer::max('offer_number') ?? 0;
+            $newOfferNumber = $lastOfferNumber + 1;
+        
+            $international_offer = \App\Models\InternationalOffer::firstOrNew(['international_inquiry_id' => $international_inquiry->id]);
+            $international_offer->offer_number = $newOfferNumber;
+            $international_offer->international_inquiry_id = $international_inquiry->id;
+            $international_offer->save();
+        
+            $responseMessage = 'International Inquiry moved to Offers and offer number created.';
+        }elseif ($request->status == 1 && $international_inquiry->offers_status === 0) {
+            $responseMessage = 'International Inquiry moved to Offer Cancellations.';
+        } elseif ($request->status == 1 && $international_inquiry->offers_status === 1) {
+            $lastOrderNumber = \App\Models\InternationalOrder::max('order_number') ?? 56564;
+            $newOrderNumber = $lastOrderNumber + 1;
+                
+            $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+        
+            if ($international_offer) {        
+                $international_order = \App\Models\InternationalOrder::firstOrNew(['international_offer_id' => $international_offer->id]);
+                $international_order->order_number = $newOrderNumber;
+                $international_order->international_offer_id = $international_offer->id;
+                $international_order->save();        
+                $responseMessage = 'Internatnional Inquiry moved to Orders and order number updated.';
+            } else {
+                $responseMessage = 'Offer not found for the inquiry.';
+            }
+        }elseif ($request->status == 1 && $inquiry->offers_status === 1 && $inquiry->orders_status ===0) {
+            $responseMessage = 'Inquiry moved to Orders Cancellations.';
         }
-
+        
+    
         return response()->json([
             'success' => true,
-            'message' => 'Offer status updated successfully.',
+            'message' => 'Status updated successfully.',
+            'responseMessage' => $responseMessage ?? ''
         ]);
     }
+
+    
     /**
      * @OA\Post(
      *     path="/api/international-inquiries/bulk-upload",
@@ -682,8 +761,6 @@ class InternationalInquiryController extends Controller
     public function downloadTemplate()
     {
         $headers = [
-            'id',
-            'inquiry_number',
             'mobile_number',
             'inquiry_date',
             'product_categories',
@@ -768,5 +845,11 @@ class InternationalInquiryController extends Controller
             'success' => true,
             'message' => 'International Inquiry deleted successfully.',
         ],200);
+    }
+
+    public function getNextInternationalInquiryNumber()
+    {
+        $nextNumber = \App\Models\Inquiry::max('inquiry_number') + 1;
+        return response()->json(['next_inquiry_number' => $nextNumber]);
     }
 }
