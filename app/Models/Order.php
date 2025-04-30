@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\OrderSeller;
+use App\Models\Offer;
+
 
 class Order extends Model
 {
@@ -36,6 +38,9 @@ class Order extends Model
     public function sellers() {
         return $this->hasMany(OrderSeller::class);
     }
-    
+    public function offer()
+    {
+        return $this->belongsTo(\App\Models\Offer::class, 'offer_id');
+    }
 
 }

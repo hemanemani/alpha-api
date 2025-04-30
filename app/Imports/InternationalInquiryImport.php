@@ -19,8 +19,13 @@ class InternationalInquiryImport implements ToModel, WithHeadingRow, SkipsOnFail
 
     public function model(array $row)
     {
+        static $nextInquiryNumber = null;
+
+        if (is_null($nextInquiryNumber)) {
+            $nextInquiryNumber = InternationInquiry::max('inquiry_number') ?? 0;
+            $nextInquiryNumber++;
+        }
         $validator = Validator::make($row, [
-            'inquiry_number'     => 'required',
             'mobile_number'      => 'required',
             'inquiry_date'       => 'required|date_format:d-m-Y',
             'product_categories' => 'required|string',
@@ -69,7 +74,7 @@ class InternationalInquiryImport implements ToModel, WithHeadingRow, SkipsOnFail
     
     
         return new InternationInquiry([
-            'inquiry_number'        => $row['inquiry_number'],
+            'inquiry_number'        => $nextInquiryNumber++,
             'mobile_number'         => $row['mobile_number'],
             'inquiry_date'          => $inquiry_date,
             'product_categories'    => $row['product_categories'],

@@ -541,12 +541,17 @@ class InternationalInquiryController extends Controller
             })
             ->get()
             ->map(function ($international_inquiry) {
-                $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+                $international_offers = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->get();
 
-                $international_order = $international_offer ? \App\Models\InternationalOrder::where('international_offer_id', $international_offer->id)->first() : null;
-
-                $international_inquiry->order_number = $international_order?->order_number ?? null;
-
+                $international_offers->map(function ($international_offer) {
+                    $international_order = \App\Models\InternationalOrder::with('international_sellers')->where('international_offer_id', $international_offer->id)->first();
+                    $international_offer->international_order = $international_order;
+                    return $international_offer;
+                });
+    
+    
+                $international_inquiry->international_offers = $international_offers;
+    
                 return $international_inquiry;
             });
 
@@ -557,13 +562,15 @@ class InternationalInquiryController extends Controller
     {
         $request->validate([
             'status' => 'nullable|integer',
-            'offers_status' => 'nullable|boolean',
+            'offers_status' => 'nullable|integer',
             'orders_status' => 'nullable|integer'
         ]);
 
         $international_inquiry = InternationInquiry::findOrFail($id);
         $international_inquiry->status = $request->status;
         $international_inquiry->offers_status = $request->offers_status ?? $international_inquiry->offers_status;
+        $international_inquiry->orders_status = $request->orders_status ?? $international_inquiry->orders_status;
+
 
         $international_inquiry->save();
 
@@ -581,9 +588,11 @@ class InternationalInquiryController extends Controller
             $international_offer->save();
         
             $responseMessage = 'International Inquiry moved to Offers and offer number created.';
-        }elseif ($request->status == 1 && $international_inquiry->offers_status === 0) {
+        }elseif ($request->status == 1 && $request->offers_status === 0) {
             $responseMessage = 'International Inquiry moved to Offer Cancellations.';
-        } elseif ($request->status == 1 && $international_inquiry->offers_status === 1) {
+        }elseif ($request->status == 1 && $request->offers_status === 1 && $request->orders_status ===0) {
+            $responseMessage = 'Inquiry moved to Orders Cancellations.';
+        }elseif ($request->status == 1 && $request->offers_status === 1) {
             $lastOrderNumber = \App\Models\InternationalOrder::max('order_number') ?? 56564;
             $newOrderNumber = $lastOrderNumber + 1;
                 
@@ -598,8 +607,6 @@ class InternationalInquiryController extends Controller
             } else {
                 $responseMessage = 'Offer not found for the inquiry.';
             }
-        }elseif ($request->status == 1 && $inquiry->offers_status === 1 && $inquiry->orders_status ===0) {
-            $responseMessage = 'Inquiry moved to Orders Cancellations.';
         }
         
     

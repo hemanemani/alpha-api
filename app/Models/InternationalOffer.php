@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\InternationInquiry;
+use App\Models\InternationalOrder;
+
 
 class InternationalOffer extends Model
 {
@@ -21,9 +23,14 @@ class InternationalOffer extends Model
         'international_inquiry_id',
     ];
 
-    public function inquiry()
+    public function international_inquiry()
     {
         return $this->belongsTo(InternationInquiry::class, 'international_inquiry_id');
     }
+    public function international_order()
+    {
+        return $this->hasOne(\App\Models\InternationalOrder::class, 'international_offer_id');
+    }
+
 
 }

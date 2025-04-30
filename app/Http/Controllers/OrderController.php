@@ -15,53 +15,39 @@ use Spatie\Browsershot\Browsershot;
 class OrderController extends Controller
 {
     public function index()
-{
-    // Fetch inquiries with the necessary filters
-    $orders = Inquiry::where('status', 1)
-        ->where('offers_status', 1)
-        ->get()
-        ->map(function ($inquiry) {
-            // Get related offers based on inquiry_id
-            $offers = \App\Models\Offer::where('inquiry_id', $inquiry->id)->get();
-
-            // For each offer, find the related order and sellers
-            $offers->map(function ($offer) {
-                // Find order using offer_id and eager load sellers
-                $order = \App\Models\Order::with('sellers')->where('offer_id', $offer->id)->first();
-                $offer->order = $order;
-                return $offer;
-            });
-
-            // Attach offers to the inquiry
-            $inquiry->offers = $offers;
-
-            return $inquiry;
-        });
-
-    return response()->json($orders);
-}
+    {
+        $orders = \App\Models\Order::with([       
+                'sellers',                        
+                'offer.inquiry'])->get();
+    
+        return response()->json($orders);
+    }
 
     
-    public function showByOfferId($offer_id)
+    public function showByOrderId($id)
     {
-        $order = Order::with('sellers')
-                    ->where('offer_id', $offer_id)
-                    ->first();
-
+        $order = \App\Models\Order::with([
+            'sellers',
+            'offer.inquiry'
+        ])->where('id', $id)->first();
+                
         if (!$order) {
             return response()->json(['error' => 'Order not found'], 404);
         }
 
+
         return response()->json([
             'order' => $order,
             'sellers' => $order->sellers,
+            'inquiry' => $order->offer->inquiry ?? null,
         ]);
+
     }
 
-    public function update(Request $request, $offerId)
+    public function update(Request $request, $offer_id)
     {
         $validatedData = $request->validate([
-            'offer_id'  => 'required|string',
+            'offer_id'  => 'required|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
             'contact_number' => 'string|max:20',
@@ -105,6 +91,9 @@ class OrderController extends Controller
             'sellers.*.invoice_value' => 'nullable|numeric',
             'sellers.*.invoice_number' => 'nullable|string|max:100',
             'sellers.*.order_ready_date' => 'nullable|date',
+            'sellers.*.order_delivery_date' => 'nullable|date',
+            'sellers.*.order_dispatch_date' => 'nullable|date',
+
     
             // Invoice
             'sellers.*.invoicing_invoice_generate_date' => 'nullable|date',
@@ -133,26 +122,11 @@ class OrderController extends Controller
             $order = Order::create($validatedData);
             $isNew = true;
         }
-
-        // $request->validate([
-        //     'contact_number' => ['required', new UniqueMobileAcrossTables],
-        // ]);
     
         OrderSeller::where('order_id', $order->id)->delete();
     
         foreach ($request->input('sellers') as $sellerData) {
             $sellerData['order_id'] = $order->id;
-        
-            // if (!empty($sellerData['invoice_generate_date'])) {
-            //     $sellerData['invoice_generate_date'] = \Carbon\Carbon::createFromFormat('d-m-Y', $sellerData['invoice_generate_date'])->format('Y-m-d');
-            // }
-            // if (!empty($sellerData['order_ready_date'])) {
-            //     $sellerData['order_ready_date'] = \Carbon\Carbon::createFromFormat('d-m-Y', $sellerData['order_ready_date'])->format('Y-m-d');
-            // }
-            // if (!empty($sellerData['invoicing_invoice_generate_date'])) {
-            //     $sellerData['invoicing_invoice_generate_date'] = \Carbon\Carbon::createFromFormat('d-m-Y', $sellerData['invoicing_invoice_generate_date'])->format('Y-m-d');
-            // }
-        
             OrderSeller::create($sellerData);
         }
         

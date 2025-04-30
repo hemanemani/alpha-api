@@ -33,7 +33,7 @@ class AdController extends Controller
             'platform'            => 'nullable|string|max:100',
             'status'              => 'nullable|string|max:50',
             'goal'                => 'nullable|string|max:100',
-            'audience'            => 'nullable|string|max:100',
+            'audience'            => 'nullable|array|max:100',
             'budget_set'          => 'nullable|numeric|min:0',
             'views'               => 'nullable|integer|min:0',
             'reach'               => 'nullable|integer|min:0',
@@ -47,10 +47,6 @@ class AdController extends Controller
             'duration'            => 'nullable|string|max:50',
         ]);
 
-        if ($request->date_published) {
-            $data['date_published'] = \Carbon\Carbon::createFromFormat('d-m-Y', $request->date_published)->format('Y-m-d');
-        }
-        
         if ($data['type'] === 'domestic') {
             $ad = Ad::create($data);
         } else {
@@ -103,7 +99,7 @@ class AdController extends Controller
                 'platform'            => 'nullable|string|max:100',
                 'status'              => 'nullable|string|max:50',
                 'goal'                => 'nullable|string|max:100',
-                'audience'            => 'nullable|string|max:100',
+                'audience'            => 'nullable|array|max:100',
                 'budget_set'          => 'nullable|numeric|min:0',
                 'views'               => 'nullable|integer|min:0',
                 'reach'               => 'nullable|integer|min:0',
@@ -116,11 +112,6 @@ class AdController extends Controller
                 'total_amount_spend'  => 'nullable|numeric|min:0',
                 'duration'            => 'nullable|string|max:50',
             ]);
-        
-            if ($request->date_published) {
-                $data['date_published'] = \Carbon\Carbon::createFromFormat('d-m-Y', $request->date_published)
-                                              ->format('Y-m-d');
-            }
         
             if (($data['type'] ?? null) === 'international') {
                 $model = InternationalAd::findOrFail($id);

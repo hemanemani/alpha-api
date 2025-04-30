@@ -95,7 +95,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('products',ProductController::class);
 
     Route::resource('orders', OrderController::class);
-    Route::get('orders/by-offer/{offer_id}', [OrderController::class, 'showByOfferId']);
+    Route::get('orders/by-offer/{id}', [OrderController::class, 'showByOrderId']);
     Route::post('orders/generate-invoice-pdf', [OrderController::class, 'generatePDF']);
 
     Route::get('/order-domestic-cancellations', [InquiryController::class, 'orderDomesticCancellations'])->name('order.domestic.cancellations');
@@ -103,10 +103,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::resource('international-orders', InternationalOrderController::class);
-    Route::get('international-orders/by-offer/{offer_id}', [InternationalOrderController::class, 'showByOfferId']);
+    Route::get('international-orders/by-offer/{id}', [InternationalOrderController::class, 'showByOrderId']);
     Route::post('international-orders/generate-invoice-pdf', [InternationalOrderController::class, 'generatePDF']);
 
-    Route::get('/order-international-cancellations', [InternationalOrderController::class, 'orderInternationalCancellations'])->name('order.international.cancellations');
+    Route::get('/order-international-cancellations', [InternationalInquiryController::class, 'orderInternationalCancellations'])->name('order.international.cancellations');
 
     Route::post('/block-order/{id}', [OrderController::class, 'blockOrder']);
     Route::post('/block-international-order/{id}', [InternationalOrderController::class, 'blockInternationalOrder']);

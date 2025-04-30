@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\InternationalOrderSeller;
+use App\Models\InternationalOffer;
 
 class InternationalOrder extends Model
 {
@@ -36,6 +37,10 @@ class InternationalOrder extends Model
     public function international_sellers() {
         return $this->hasMany(InternationalOrderSeller::class);
     }
-    
+    public function international_offer()
+    {
+        return $this->belongsTo(\App\Models\InternationalOffer::class, 'international_offer_id');
+    }
+
 
 }

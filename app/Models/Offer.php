@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Inquiry;
+use App\Models\Order;
+
 
 class Offer extends Model
 {
@@ -25,6 +27,10 @@ class Offer extends Model
     public function inquiry()
     {
         return $this->belongsTo(Inquiry::class, 'inquiry_id');
+    }
+    public function order()
+    {
+        return $this->hasOne(\App\Models\Order::class, 'offer_id');
     }
 
 }

@@ -31,6 +31,8 @@ class OrderSeller extends Model
         'invoice_value',
         'invoice_number',
         'order_ready_date',
+        'order_delivery_date',
+        'order_dispatch_date',
         
         // invoice
         'invoicing_invoice_generate_date',
