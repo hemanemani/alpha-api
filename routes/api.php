@@ -43,6 +43,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/refresh-all', [DashboardController::class, 'refresh_all']);
 
     Route::get('/inquiries/next-number', [InquiryController::class, 'getNextInquiryNumber']);
+    Route::get('/international_inquiries/next-number', [InternationalInquiryController::class, 'getNextInternationalInquiryNumber']);
+
+    Route::get('/orders/next-number', [OrderController::class, 'getNextOrderNumber']);
+    Route::get('/international-orders/next-number', [InternationalOrderController::class, 'getNextInternationalOrderNumber']);
 
 
     Route::resource('inquiries',InquiryController::class);
@@ -57,7 +61,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
 
-    Route::get('/international_inquiries/next-number', [InternationalInquiryController::class, 'getNextInternationalInquiryNumber']);
 
     Route::resource('international_inquiries',InternationalInquiryController::class);
     Route::get('/inquiry-approved-international-offers', [InternationalInquiryController::class, 'approved_offers'])->name('inquiry.international.approved.offers');
@@ -94,12 +97,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::resource('products',ProductController::class);
 
+    
+
+
+
     Route::resource('orders', OrderController::class);
     Route::get('orders/by-offer/{id}', [OrderController::class, 'showByOrderId']);
     Route::post('orders/generate-invoice-pdf', [OrderController::class, 'generatePDF']);
 
     Route::get('/order-domestic-cancellations', [InquiryController::class, 'orderDomesticCancellations'])->name('order.domestic.cancellations');
-
 
 
     Route::resource('international-orders', InternationalOrderController::class);

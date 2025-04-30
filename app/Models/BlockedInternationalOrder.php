@@ -10,6 +10,6 @@ class BlockedOffer extends Model
     protected $table = 'blocked_international_orders';
 
     protected $fillable = [
-        'contact_number',
+        'mobile_number',
     ];
 }

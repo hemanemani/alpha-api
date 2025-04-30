@@ -14,7 +14,7 @@ class Order extends Model
         'offer_id',
         'order_number',
         'name',
-        'contact_number',
+        'mobile_number',
         'seller_assigned',
         'quantity',
         'seller_offer_rate',

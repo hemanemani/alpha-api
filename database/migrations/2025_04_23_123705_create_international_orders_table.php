@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('order_number')->unique()->default(56565);
             $table->string('name')->nullable();
-            $table->string('contact_number')->nullable();
+            $table->string('mobile_number')->nullable();
             $table->string('seller_assigned')->nullable();
             $table->integer('quantity')->nullable();
             $table->decimal('seller_offer_rate', 10, 2)->nullable();

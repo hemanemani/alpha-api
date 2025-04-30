@@ -16,7 +16,7 @@ class UniqueMobileAcrossTables implements Rule
             return false;
         }
 
-        if (DB::table('orders')->where('contact_number', $value)->exists()) {
+        if (DB::table('orders')->where('mobile_number', $value)->exists()) {
             $this->conflictSource = 'orders';
             return false;
         }

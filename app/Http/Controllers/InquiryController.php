@@ -181,7 +181,7 @@ class InquiryController extends Controller
     {
 
         BlockedOrder::create([
-            'contact_number' => $request->contact_number,
+            'mobile_number' => $request->mobile_number,
         ]);
     
         return response()->json([
@@ -496,11 +496,19 @@ class InquiryController extends Controller
             : null;    
 
         $offer = null;
-        if ($inquiry->status == 1 && isset($offerData['offer_number'])) {
+
+        if ($inquiry->status == 1) {
+            $existingOffer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();
+
+            if (!$existingOffer) {
+                $lastOfferNumber = \App\Models\Offer::max('offer_number') ?? 0;
+                $newOfferNumber = $lastOfferNumber + 1;
+            }
+            
             $offer = Offer::updateOrCreate(
                 ['inquiry_id' => $inquiry->id],
                 [
-                    'offer_number' => $offerData['offer_number'],
+                    'offer_number' => $existingOffer->offer_number ?? $newOfferNumber,
                     'communication_date' => $communication_date,
                     'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
                     'sent_sample_amount' => $offerData['sent_sample_amount'] ?? null,
@@ -512,6 +520,16 @@ class InquiryController extends Controller
 
                 ]
             );
+
+            if ($inquiry->offers_status == 1) {
+                $lastOrderNumber = \App\Models\Order::max('order_number') ?? 56564;
+                $newOrderNumber = $lastOrderNumber + 1;
+        
+                \App\Models\Order::create([
+                    'order_number' => $newOrderNumber,
+                    'offer_id' => $offer->id,
+                ]);
+            }
         }else{
             $offer = null;
         }

@@ -23,7 +23,6 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    
     public function showByOrderId($id)
     {
         $order = \App\Models\Order::with([
@@ -44,13 +43,99 @@ class OrderController extends Controller
 
     }
 
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'offer_id'  => 'nullable|numeric',
+            'order_number' => 'nullable|numeric',
+            'name' => 'nullable|string|max:255',
+            'mobile_number' => 'string|max:20',
+            'seller_assigned' => 'nullable|string|max:255',
+            'quantity' => 'nullable|numeric',
+            'seller_offer_rate' => 'nullable|numeric',
+            'gst' => 'nullable|string|max:50',
+            'buyer_offer_rate' => 'nullable|numeric',
+            'final_shipping_value' => 'nullable|numeric',
+            'total_amount' => 'nullable|numeric',
+            'buyer_gst_number' => 'nullable|string|max:100',
+            'buyer_pan' => 'nullable|string|max:100',
+            'buyer_bank_details' => 'nullable|string|max:255',
+            'amount_received' => 'nullable|numeric',
+            'amount_received_date' => 'nullable|date',
+            'amount_paid' => 'nullable|numeric',
+            'amount_paid_date' => 'nullable|date',
+            'logistics_through' => 'nullable|string|max:100',
+            'logistics_agency' => 'nullable|string|max:100',
+            'shipping_estimate_value' => 'nullable|numeric',
+            'buyer_final_shipping_value' => 'nullable|numeric',
+    
+            // Sellers array validation
+            'sellers' => 'required|array|min:1',
+            'sellers.*.seller_name' => 'nullable|string|max:255',
+            'sellers.*.seller_address' => 'nullable|string|max:255',
+            'sellers.*.seller_contact' => 'nullable|string|max:20',
+            'sellers.*.shipping_name' => 'nullable|string|max:255',
+            'sellers.*.address_line_1' => 'nullable|string|max:255',
+            'sellers.*.address_line_2' => 'nullable|string|max:255',
+            'sellers.*.seller_pincode' => 'nullable|string|max:20',
+            'sellers.*.seller_contact_person_name' => 'nullable|string|max:255',
+            'sellers.*.seller_contact_person_number' => 'nullable|string|max:20',
+            'sellers.*.no_of_boxes' => 'nullable|numeric',
+            'sellers.*.weight_per_unit' => 'nullable|numeric',
+            'sellers.*.dimension_unit' => 'nullable|string|max:10',
+            'sellers.*.length' => 'nullable|numeric',
+            'sellers.*.width' => 'nullable|numeric',
+            'sellers.*.height' => 'nullable|numeric',
+            'sellers.*.invoice_generate_date' => 'nullable|date',
+            'sellers.*.invoice_value' => 'nullable|numeric',
+            'sellers.*.invoice_number' => 'nullable|string|max:100',
+            'sellers.*.order_ready_date' => 'nullable|date',
+            'sellers.*.order_delivery_date' => 'nullable|date',
+            'sellers.*.order_dispatch_date' => 'nullable|date',
+
+    
+            // Invoice
+            'sellers.*.invoicing_invoice_generate_date' => 'nullable|date',
+            'sellers.*.invoicing_invoice_number' => 'nullable|string',
+            'sellers.*.invoice_to' => 'nullable|string',
+            'sellers.*.invoice_address' => 'nullable|string',
+            'sellers.*.invoice_gstin' => 'nullable|string',
+            'sellers.*.packaging_expenses' => 'nullable|numeric',
+            'sellers.*.invoicing_total_amount' => 'nullable|numeric',
+            'sellers.*.total_amount_in_words' => 'nullable|string',
+            'sellers.*.product_name' => 'nullable|string',
+            'sellers.*.rate_per_kg' => 'nullable|numeric',
+            'sellers.*.total_kg' => 'nullable|numeric',
+            'sellers.*.hsn' => 'nullable|string',
+            'sellers.*.invoicing_amount' => 'nullable|numeric',
+            'sellers.*.expenses' => 'nullable|numeric',
+        ]);
+    
+        $orderData = collect($validatedData)->except('sellers')->toArray();
+        $order = Order::create($orderData);
+    
+        OrderSeller::where('order_id', $order->id)->delete();
+    
+        foreach ($validatedData['sellers'] as $sellerData) {
+            $sellerData['order_id'] = $order->id;
+            OrderSeller::create($sellerData);
+        }
+    
+    
+        return response()->json([
+            'message' => 'Order created successfully',
+            'order' => $order,
+            'sellers' => $order->sellers,
+        ]);
+    }
+
     public function update(Request $request, $offer_id)
     {
         $validatedData = $request->validate([
-            'offer_id'  => 'required|numeric',
+            'offer_id'  => 'nullable|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
-            'contact_number' => 'string|max:20',
+            'mobile_number' => 'string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
             'quantity' => 'nullable|numeric',
             'seller_offer_rate' => 'nullable|numeric',
@@ -157,7 +242,11 @@ class OrderController extends Controller
             ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
     }
 
-
+    public function getNextOrderNumber()
+    {
+        $nextNumber = \App\Models\Order::max('order_number') + 1;
+        return response()->json(['next_order_number' => $nextNumber]);
+    }
     
 
 }

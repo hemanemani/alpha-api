@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('blocked_international_orders', function (Blueprint $table) {
             $table->id();
-            $table->string('contact_number')->unique();
+            $table->string('mobile_number')->unique();
             $table->timestamps();
         });
     }

@@ -178,7 +178,7 @@ class InternationalInquiryController extends Controller
     {
 
         BlockedInternationalOrder::create([
-            'contact_number' => $request->contact_number,
+            'mobile_number' => $request->mobile_number,
         ]);
     
         return response()->json([
@@ -420,6 +420,7 @@ class InternationalInquiryController extends Controller
             'notes' => 'nullable|string',
             'user_id' => 'sometimes|exists:users,id',
             'status' => 'nullable|integer',
+            'offers_status' => 'nullable|integer',
             
             
 
@@ -464,6 +465,7 @@ class InternationalInquiryController extends Controller
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
             'status' => $validated['status'],
+            'offers_status' => $request->has('offers_status') ? $validated['offers_status'] : 2,
 
         ]);
 
@@ -483,11 +485,19 @@ class InternationalInquiryController extends Controller
 
 
         $international_offer = null;
-        if ($international_inquiry->status == 1 && isset($offerData['offer_number'])) {
+        if ($international_inquiry->status == 1) {
+
+            $existingInternationalOffer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+
+            if (!$existingInternationalOffer) {
+                $lastInternationalOfferNumber = \App\Models\InternationalOffer::max('offer_number') ?? 0;
+                $newInternationalOfferNumber = $lastInternationalOfferNumber + 1;
+            }
+
             $international_offer = InternationalOffer::updateOrCreate(
                 ['international_inquiry_id' => $international_inquiry->id],
                 [
-                    'offer_number' => $offerData['offer_number'],
+                    'offer_number' => $existingInternationalOffer->offer_number ?? $newInternationalOfferNumber,
                     'communication_date' => $communication_date,
                     'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
                     'sent_sample_amount' => $offerData['sent_sample_amount'] ?? null,
@@ -499,6 +509,15 @@ class InternationalInquiryController extends Controller
 
                 ]
             );
+            if ($international_inquiry->offers_status == 1) {
+                $lastInternationalOrderNumber = \App\Models\InternationalOrder::max('order_number') ?? 56564;
+                $newInternationalOrderNumber = $lastInternationalOrderNumber + 1;
+        
+                \App\Models\InternationalOrder::create([
+                    'order_number' => $newInternationalOrderNumber,
+                    'international_offer_id' => $international_offer->id,
+                ]);
+            }
         }else {
             $international_offer = null;
         }

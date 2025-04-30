@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('company_name');
-            $table->string('contact_number');
+            $table->string('mobile_number');
             $table->string('email')->unique();
             $table->string('gst')->nullable();
             $table->string('pan')->nullable();

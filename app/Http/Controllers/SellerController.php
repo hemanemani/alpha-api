@@ -34,7 +34,7 @@ class SellerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
-            'contact_number' => 'required|string|max:255',
+            'mobile_number' => 'required|string|max:255',
             'email' => 'nullable|email|unique:sellers,email',
             'gst' => 'nullable|string|max:255',
             'pan' => 'nullable|string|max:255',
@@ -54,7 +54,7 @@ class SellerController extends Controller
             $seller = Seller::create([
                 'name' => $validated['name'],
                 'company_name' => $validated['company_name'] ?? null,
-                'contact_number' => $validated['contact_number'],
+                'mobile_number' => $validated['mobile_number'],
                 'email' => $validated['email'] ?? null,
                 'gst' => $validated['gst'] ?? null,
                 'pan' => $validated['pan'] ?? null,
@@ -89,7 +89,7 @@ class SellerController extends Controller
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'company_name' => 'nullable|string|max:255',
-            'contact_number' => 'sometimes|string|max:255',
+            'mobile_number' => 'sometimes|string|max:255',
             'email' => 'nullable|email|unique:sellers,email,' . $seller->id,
             'gst' => 'nullable|string|max:255',
             'pan' => 'nullable|string|max:255',
@@ -107,7 +107,7 @@ class SellerController extends Controller
             $seller->update([
                 'name' => $request->name,
                 'company_name' => $request->company_name,
-                'contact_number' => $request->contact_number,
+                'mobile_number' => $request->mobile_number,
                 'email' => $request->email,
                 'gst' => $request->gst,
                 'pan'  => $request->pan,
@@ -149,7 +149,7 @@ class SellerController extends Controller
     }
     public function getSellers()
     {
-        $sellers = Seller::select('id', 'name','pickup_address','contact_number')->get();
+        $sellers = Seller::select('id', 'name','pickup_address','mobile_number')->get();
         return response()->json($sellers);
     }
 
