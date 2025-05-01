@@ -50,6 +50,12 @@ class InquiryController extends Controller
         $inquiries = Inquiry::with('user')->where('status','2')->get();
         return response()->json($inquiries);
     }
+
+    public function total_index()
+    {
+        $inquiries = Inquiry::all();
+        return response()->json($inquiries);
+    }
     /**
      * @OA\Get(
      *     path="/api/inquiry-approved-offers",

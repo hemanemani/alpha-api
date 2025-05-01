@@ -50,6 +50,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::resource('inquiries',InquiryController::class);
+
+    Route::get('/all-inquiries',[InquiryController::class,'total_index']);
+
     Route::get('/inquiry-approved-offers', [InquiryController::class, 'approved_offers'])->name('inquiry.approved.offers');
     Route::get('/inquiry-cancellation-offers', [InquiryController::class, 'cancellation_offers'])->name('inquiry.cancellation.offers');
     Route::patch('/inquiries/{id}/update-inquiry-status', [InquiryController::class, 'updateInquiryStatus'])->name('inquiries.updateInquiryStatus');
@@ -58,6 +61,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/bulk-domestic-data', [InquiryController::class, 'bulkUploadData'])->name('inquiries.bulkUpload.data');
     Route::delete('/bulk-domestic-data/{id}', [InquiryController::class, 'uploadDestroy']);
     Route::post('/block-inquiry/{id}', [InquiryController::class, 'blockInquiry']);
+
+    Route::get('/all-inquiries',[InquiryController::class,'total_index']);
 
 
 

@@ -34,6 +34,10 @@ class DashboardController extends Controller
             'last_30_days' => Inquiry::where('created_at', '>=', now()->subDays(30))->count(),
             'last_90_days' => Inquiry::where('created_at', '>=', now()->subDays(90))->count(),
             'last_365_days' => Inquiry::where('created_at', '>=', now()->subDays(365))->count(),
+            'this_month' => Inquiry::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count(),
+
         ];
 
         $inquiryOfferDateRanges = [
@@ -43,6 +47,10 @@ class DashboardController extends Controller
             'last_30_days' => Inquiry::where('created_at', '>=', now()->subDays(30))->where('status', '1')->count(),
             'last_90_days' => Inquiry::where('created_at', '>=', now()->subDays(90))->where('status', '1')->count(),
             'last_365_days' => Inquiry::where('created_at', '>=', now()->subDays(365))->where('status', '1')->count(),
+            'this_month' => Inquiry::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)->where('status', '1')
+            ->count(),
+
         ];
 
         $inquiryCancelDateRanges = [
@@ -52,6 +60,9 @@ class DashboardController extends Controller
             'last_30_days' => Inquiry::where('created_at', '>=', now()->subDays(30))->where('status', '0')->count(),
             'last_90_days' => Inquiry::where('created_at', '>=', now()->subDays(90))->where('status', '0')->count(),
             'last_365_days' => Inquiry::where('created_at', '>=', now()->subDays(365))->where('status', '0')->count(),
+            'this_month' => Inquiry::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)->where('status', '0')
+            ->count(),
         ];
 
         // Fetch counts for InternationInquiry
@@ -62,6 +73,9 @@ class DashboardController extends Controller
             'last_30_days' => InternationInquiry::where('created_at', '>=', now()->subDays(30))->count(),
             'last_90_days' => InternationInquiry::where('created_at', '>=', now()->subDays(90))->count(),
             'last_365_days' => InternationInquiry::where('created_at', '>=', now()->subDays(365))->count(),
+            'this_month' => InternationInquiry::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count(),
         ];
 
         $interOfferInquiryDateRanges = [
@@ -71,6 +85,9 @@ class DashboardController extends Controller
             'last_30_days' => InternationInquiry::where('created_at', '>=', now()->subDays(30))->where('status', '1')->count(),
             'last_90_days' => InternationInquiry::where('created_at', '>=', now()->subDays(90))->where('status', '1')->count(),
             'last_365_days' => InternationInquiry::where('created_at', '>=', now()->subDays(365))->where('status', '1')->count(),
+            'this_month' => InternationInquiry::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)->where('status', '1')
+            ->count(),
         ];
 
         $interCancelInquiryDateRanges = [
@@ -80,6 +97,9 @@ class DashboardController extends Controller
             'last_30_days' => InternationInquiry::where('created_at', '>=', now()->subDays(30))->where('status', '0')->count(),
             'last_90_days' => InternationInquiry::where('created_at', '>=', now()->subDays(90))->where('status', '0')->count(),
             'last_365_days' => InternationInquiry::where('created_at', '>=', now()->subDays(365))->where('status', '0')->count(),
+            'this_month' => InternationInquiry::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)->where('status', '0')
+            ->count(),
         ];
 
         $customInquiryDateRange = null;
@@ -92,6 +112,13 @@ class DashboardController extends Controller
             $customInquiryDateRange = Inquiry::whereBetween('created_at', [$startDate, $endDate])->count();
             $customInterInquiryDateRange = InternationInquiry::whereBetween('created_at', [$startDate, $endDate])->count();
         }
+
+        $totalInquiriesCount = Inquiry::all()->count();
+        $totalInternationalCount = InternationInquiry::all()->count();
+
+        $inquiryThirdContentNullCount = Inquiry::whereNull('third_contact_date')->count();
+        $inquiryThirdContentNotNullCount = Inquiry::whereNotNull('third_contact_date')->count();
+
 
         $inquiryCount = Inquiry::where('status','2')->count();
         $interInquiryCount = InternationInquiry::where('status','2')->count();
@@ -124,7 +151,11 @@ class DashboardController extends Controller
                     'cancelDateRanges' => $interCancelInquiryDateRanges,
                     'customDateRange' => $customInterInquiryDateRange
                 ],
-                'topLocations' => $topLocations
+                'topLocations' => $topLocations,
+                'totalInquiriesCount'=> $totalInquiriesCount,
+                'totalInternationalCount'=> $totalInternationalCount,
+                'inquiryThirdContentNullCount'=> $inquiryThirdContentNullCount ?? 0,
+                'inquiryThirdContentNotNullCount' => $inquiryThirdContentNotNullCount ?? 0
             ],
         ]);
 
