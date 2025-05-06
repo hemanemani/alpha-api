@@ -135,7 +135,7 @@ class OrderController extends Controller
             'offer_id'  => 'nullable|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
-            'mobile_number' => 'string|max:20',
+            'mobile_number' => 'nullable|string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
             'quantity' => 'nullable|numeric',
             'seller_offer_rate' => 'nullable|numeric',

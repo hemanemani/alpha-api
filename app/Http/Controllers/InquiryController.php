@@ -18,7 +18,8 @@ use App\Models\BlockedOffer;
 use Illuminate\Support\Facades\Schema;
 use App\Rules\UniqueMobileAcrossTables;
 use App\Models\BlockedOrder;
-
+use App\Models\OrderSeller;
+use App\Models\Order;
 
 class InquiryController extends Controller
 {
@@ -54,7 +55,78 @@ class InquiryController extends Controller
     public function total_index()
     {
         $inquiries = Inquiry::all();
-        return response()->json($inquiries);
+
+        $sampleStatusCounts = [
+            'notDispatched' => Offer::whereNull('sample_dispatched_date')->count(),
+            'dispatchedOnly' => Offer::whereNotNull('sample_dispatched_date')->whereNull('sample_received_date')->count(),
+            'bothFilled' => Offer::whereNotNull('sample_dispatched_date')->whereNotNull('sample_received_date')->count()
+        ];
+
+        $domesticAdPlatform = \App\Models\Ad::select('platform', \DB::raw('SUM(messages_received) as total'))
+        ->whereNotNull('messages_received')
+        ->groupBy('platform')
+        ->get();
+
+
+
+        $internationalAdPlatform = \App\Models\InternationalAd::select('platform', \DB::raw('SUM(messages_received) as total'))
+            ->whereNotNull('messages_received')
+            ->groupBy('platform')
+            ->get();
+
+
+        $combinedAds = collect();
+
+        foreach (['instagram', 'meta', 'facebook'] as $platform) {
+            $domesticTotal = $domesticAdPlatform->firstWhere('platform', $platform)->total ?? 0;
+            $internationalTotal = $internationalAdPlatform->firstWhere('platform', $platform)->total ?? 0;
+        
+            $combinedAds->push([
+                'platform' => ucfirst($platform),
+                'total' => $domesticTotal + $internationalTotal,
+            ]);
+        }
+
+
+
+        $deliveredOrderedCount = OrderSeller::whereNotNull('order_dispatch_date')
+            ->whereNotNull('order_delivery_date')
+            ->count();
+        
+        $dispatchedOrderedCount = OrderSeller::whereNotNull('order_dispatch_date')
+            ->whereNull('order_delivery_date')
+            ->count();
+        
+        $pendingOrderedCount = OrderSeller::whereNull('order_dispatch_date')
+            ->count();
+
+        $totalSellerOrderCount = $deliveredOrderedCount + $dispatchedOrderedCount + $pendingOrderedCount;
+
+
+        $shipRocketCount = Order::where('logistics_through', 'ship_rocket')->count();
+        $sellerFulfilledCount = Order::where('logistics_through', 'seller_fulfilled')->count();
+        $totalLogisticsCount = $shipRocketCount + $sellerFulfilledCount;
+
+        return response()->json([
+            'inquiries' => $inquiries,
+            'sampleStatusCounts' => $sampleStatusCounts,
+            'combinedAds' => $combinedAds,
+            'orderDispatchData' => [
+                'delivered' => $deliveredOrderedCount,
+                'dispatched' => $dispatchedOrderedCount,
+                'pending' => $pendingOrderedCount,
+                'total' => $totalSellerOrderCount,
+            ],
+            'logisticsData' => [
+                'ship_rocket' => $shipRocketCount,
+                'seller_fulfilled' => $sellerFulfilledCount,
+                'total' => $totalLogisticsCount,
+            ],
+    
+        ]
+            
+        );
+
     }
     /**
      * @OA\Get(
@@ -436,6 +508,7 @@ class InquiryController extends Controller
             //offers
             'inquiry_id' => 'sometimes|exists:inquiries,id',
             'offer_number' => 'sometimes|string',
+            'offer_date' => 'sometimes|date',
             'communication_date' => 'sometimes|date',
             'received_sample_amount' => 'sometimes|integer',
             'sent_sample_amount' => 'sometimes|integer',

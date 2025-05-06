@@ -16,7 +16,8 @@ use App\Models\UploadInternationalInquiry;
 use Illuminate\Support\Facades\Auth;
 use App\Rules\UniqueMobileAcrossTables;
 use App\Models\BlockedInternationalOrder;
-
+use App\Models\InternationalOrderSeller;
+use App\Models\InternationalOrder;
 
 class InternationalInquiryController extends Controller
 {
@@ -65,6 +66,82 @@ class InternationalInquiryController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated.")
      * )
      */
+    public function total_index()
+    {
+        $inquiries = InternationInquiry::all();
+
+        $sampleStatusCounts = [
+            'notDispatched' => InternationalOffer::whereNull('sample_dispatched_date')->count(),
+            'dispatchedOnly' => InternationalOffer::whereNotNull('sample_dispatched_date')->whereNull('sample_received_date')->count(),
+            'bothFilled' => InternationalOffer::whereNotNull('sample_dispatched_date')->whereNotNull('sample_received_date')->count()
+        ];
+
+        $domesticAdPlatform = \App\Models\Ad::select('platform', \DB::raw('SUM(messages_received) as total'))
+        ->whereNotNull('messages_received')
+        ->groupBy('platform')
+        ->get();
+
+
+
+        $internationalAdPlatform = \App\Models\InternationalAd::select('platform', \DB::raw('SUM(messages_received) as total'))
+            ->whereNotNull('messages_received')
+            ->groupBy('platform')
+            ->get();
+
+
+        $combinedAds = collect();
+
+        foreach (['instagram', 'meta', 'facebook'] as $platform) {
+            $domesticTotal = $domesticAdPlatform->firstWhere('platform', $platform)->total ?? 0;
+            $internationalTotal = $internationalAdPlatform->firstWhere('platform', $platform)->total ?? 0;
+        
+            $combinedAds->push([
+                'platform' => ucfirst($platform),
+                'total' => $domesticTotal + $internationalTotal,
+            ]);
+        }
+
+
+
+        $deliveredOrderedCount = InternationalOrderSeller::whereNotNull('order_dispatch_date')
+            ->whereNotNull('order_delivery_date')
+            ->count();
+        
+        $dispatchedOrderedCount = InternationalOrderSeller::whereNotNull('order_dispatch_date')
+            ->whereNull('order_delivery_date')
+            ->count();
+        
+        $pendingOrderedCount = InternationalOrderSeller::whereNull('order_dispatch_date')
+            ->count();
+
+        $totalSellerOrderCount = $deliveredOrderedCount + $dispatchedOrderedCount + $pendingOrderedCount;
+
+
+        $shipRocketCount = InternationalOrder::where('logistics_through', 'ship_rocket')->count();
+        $sellerFulfilledCount = InternationalOrder::where('logistics_through', 'seller_fulfilled')->count();
+        $totalLogisticsCount = $shipRocketCount + $sellerFulfilledCount;
+
+        return response()->json([
+            'inquiries' => $inquiries,
+            'sampleStatusCounts' => $sampleStatusCounts,
+            'combinedAds' => $combinedAds,
+            'orderDispatchData' => [
+                'delivered' => $deliveredOrderedCount,
+                'dispatched' => $dispatchedOrderedCount,
+                'pending' => $pendingOrderedCount,
+                'total' => $totalSellerOrderCount,
+            ],
+            'logisticsData' => [
+                'ship_rocket' => $shipRocketCount,
+                'seller_fulfilled' => $sellerFulfilledCount,
+                'total' => $totalLogisticsCount,
+            ],
+    
+        ]
+            
+        );
+
+    }
 
     public function approved_offers()
     {
@@ -427,6 +504,7 @@ class InternationalInquiryController extends Controller
             //offers
             'international_inquiry_id' => 'sometimes|exists:international_inquiries,id',
             'offer_number' => 'sometimes|string',
+            'offer_date' => 'sometimes|date',
             'communication_date' => 'sometimes|date',
             'received_sample_amount' => 'sometimes|integer',
             'sent_sample_amount' => 'sometimes|integer',

@@ -53,6 +53,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/all-inquiries',[InquiryController::class,'total_index']);
 
+
+
     Route::get('/inquiry-approved-offers', [InquiryController::class, 'approved_offers'])->name('inquiry.approved.offers');
     Route::get('/inquiry-cancellation-offers', [InquiryController::class, 'cancellation_offers'])->name('inquiry.cancellation.offers');
     Route::patch('/inquiries/{id}/update-inquiry-status', [InquiryController::class, 'updateInquiryStatus'])->name('inquiries.updateInquiryStatus');
@@ -62,10 +64,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/bulk-domestic-data/{id}', [InquiryController::class, 'uploadDestroy']);
     Route::post('/block-inquiry/{id}', [InquiryController::class, 'blockInquiry']);
 
-    Route::get('/all-inquiries',[InquiryController::class,'total_index']);
 
-
-
+    Route::get('/all-international-inquiries',[InternationalInquiryController::class,'total_index']);
 
     Route::resource('international_inquiries',InternationalInquiryController::class);
     Route::get('/inquiry-approved-international-offers', [InternationalInquiryController::class, 'approved_offers'])->name('inquiry.international.approved.offers');
@@ -90,8 +90,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/analytics/inquiries', [AnalyticsController::class, 'getInquiryData']);
     Route::get('/analytics/offers', [AnalyticsController::class, 'getOffersData']);
+    Route::get('/analytics/ads', [AnalyticsController::class, 'getAdsData']);
+    Route::get('/analytics/orders', [AnalyticsController::class, 'getOrdersData']);
+
+
 
     Route::get('/analytics/total-inquiries', [AnalyticsController::class, 'getTotalInquiries']);
+    
 
     Route::delete('/dashboard/delete-all', [DashboardController::class, 'deleteAllData']);
 

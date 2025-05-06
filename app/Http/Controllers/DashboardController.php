@@ -25,6 +25,12 @@ class DashboardController extends Controller
         ->limit(5)
         ->get();
 
+        $topInternationalLocations = InternationInquiry::select('location', DB::raw('count(*) as count'))
+        ->groupBy('location')
+        ->orderByDesc('count')
+        ->limit(5)
+        ->get();
+
         $today = now()->startOfDay();
         // Fetch counts for Inquiry
         $inquiryDateRanges = [
@@ -152,6 +158,7 @@ class DashboardController extends Controller
                     'customDateRange' => $customInterInquiryDateRange
                 ],
                 'topLocations' => $topLocations,
+                'topInternationalLocations' => $topInternationalLocations,
                 'totalInquiriesCount'=> $totalInquiriesCount,
                 'totalInternationalCount'=> $totalInternationalCount,
                 'inquiryThirdContentNullCount'=> $inquiryThirdContentNullCount ?? 0,

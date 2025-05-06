@@ -13,6 +13,7 @@ class Offer extends Model
 
     protected $fillable = [
         'offer_number',
+        'offer_date',
         'communication_date',
         'received_sample_amount',
         'sent_sample_amount',
