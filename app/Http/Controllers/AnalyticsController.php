@@ -28,41 +28,42 @@ class AnalyticsController extends Controller
         if (!$from || !$to) {
             switch ($timeRange) {
                 case "Today":
-                    $from = Carbon::today()->startOfDay()->toDateTimeString(); // Include time
-                    $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
+                    $from = Carbon::today()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 7 days":
-                    $from = Carbon::today()->subDays(6)->startOfDay()->toDateTimeString(); // Include time
-                    $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
+                    $from = Carbon::today()->subDays(6)->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 30 days":
-                    $from = Carbon::now()->subDays(30)->startOfDay()->toDateTimeString();
-                    $to = Carbon::now()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subDays(30)->toDateString();
+                    $to = Carbon::now()->toDateString();
                     break;
                 case "Last 3 months":
-                    $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 6 months":
-                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
             }
+            
     
         }
-        $domesticData = Inquiry::selectRaw('DATE(created_at) as date, COUNT(*) as dom_count')
+        $domesticData = Inquiry::selectRaw('DATE(inquiry_date) as date, COUNT(*) as dom_count')
         ->where('status', 2)
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        ->whereBetween('inquiry_date', [$from, $to])
+        ->groupBy('inquiry_date')
+        ->orderBy('inquiry_date')
         ->get()
         ->keyBy('date');
 
-        $internationalData = InternationInquiry::selectRaw('DATE(created_at) as date, COUNT(*) as int_count')
+        $internationalData = InternationInquiry::selectRaw('DATE(inquiry_date) as date, COUNT(*) as int_count')
         ->where('status', 2)
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        ->whereBetween('inquiry_date', [$from, $to])
+        ->groupBy('inquiry_date')
+        ->orderBy('inquiry_date')
         ->get()
         ->keyBy('date');
 
@@ -96,42 +97,43 @@ class AnalyticsController extends Controller
         if (!$from || !$to) {
             switch ($timeRange) {
                 case "Today":
-                    $from = Carbon::today()->startOfDay()->toDateTimeString(); // Include time
-                    $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
+                    $from = Carbon::today()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 7 days":
-                    $from = Carbon::today()->subDays(6)->startOfDay()->toDateTimeString(); // Include time
-                    $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
+                    $from = Carbon::today()->subDays(6)->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 30 days":
-                    $from = Carbon::now()->subDays(30)->startOfDay()->toDateTimeString();
-                    $to = Carbon::now()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subDays(30)->toDateString();
+                    $to = Carbon::now()->toDateString();
                     break;
                 case "Last 3 months":
-                    $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 6 months":
-                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
             }
+            
     
         }
 
-        $offersData = Inquiry::selectRaw('DATE(created_at) as date, COUNT(*) as dom_offers_count')
+        $offersData = Inquiry::selectRaw('DATE(inquiry_date) as date, COUNT(*) as dom_offers_count')
         ->where('status', 1)
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        ->whereBetween('inquiry_date', [$from, $to])
+        ->groupBy('inquiry_date')
+        ->orderBy('inquiry_date')
         ->get()
         ->keyBy('date');
 
-        $internationalOffersData = InternationInquiry::selectRaw('DATE(created_at) as date, COUNT(*) as int_offers_count')
+        $internationalOffersData = InternationInquiry::selectRaw('DATE(inquiry_date) as date, COUNT(*) as int_offers_count')
         ->where('status', 1)
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        ->whereBetween('inquiry_date', [$from, $to])
+        ->groupBy('inquiry_date')
+        ->orderBy('inquiry_date')
         ->get()
         ->keyBy('date');
 
@@ -166,42 +168,43 @@ class AnalyticsController extends Controller
         if (!$from || !$to) {
             switch ($timeRange) {
                 case "Today":
-                    $from = Carbon::today()->startOfDay()->toDateTimeString(); // Include time
-                    $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
+                    $from = Carbon::today()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 7 days":
-                    $from = Carbon::today()->subDays(6)->startOfDay()->toDateTimeString(); // Include time
-                    $to = Carbon::today()->endOfDay()->toDateTimeString(); // Include time
+                    $from = Carbon::today()->subDays(6)->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 30 days":
-                    $from = Carbon::now()->subDays(30)->startOfDay()->toDateTimeString();
-                    $to = Carbon::now()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subDays(30)->toDateString();
+                    $to = Carbon::now()->toDateString();
                     break;
                 case "Last 3 months":
-                    $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subMonths(3)->startOfMonth()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
                 case "Last 6 months":
-                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateTimeString();
-                    $to = Carbon::today()->endOfDay()->toDateTimeString();
+                    $from = Carbon::now()->subMonths(6)->startOfMonth()->toDateString();
+                    $to = Carbon::today()->toDateString();
                     break;
             }
+            
     
         }
 
-        $ordersData = Inquiry::selectRaw('DATE(created_at) as date, COUNT(*) as dom_orders_count')
+        $ordersData = Inquiry::selectRaw('DATE(inquiry_date) as date, COUNT(*) as dom_orders_count')
         ->where('offers_status', 1)
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        ->whereBetween('inquiry_date', [$from, $to])
+        ->groupBy('inquiry_date')
+        ->orderBy('inquiry_date')
         ->get()
         ->keyBy('date');
 
-        $internationalOrdersData = InternationInquiry::selectRaw('DATE(created_at) as date, COUNT(*) as int_orders_count')
+        $internationalOrdersData = InternationInquiry::selectRaw('DATE(inquiry_date) as date, COUNT(*) as int_orders_count')
         ->where('offers_status', 1)
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        ->whereBetween('inquiry_date', [$from, $to])
+        ->groupBy('inquiry_date')
+        ->orderBy('inquiry_date')
         ->get()
         ->keyBy('date');
 
@@ -258,17 +261,17 @@ class AnalyticsController extends Controller
             }
     
         }
-        $domesticAdData = Ad::selectRaw('DATE(created_at) as date, COUNT(*) as dom_ad_count')
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        $domesticAdData = Ad::selectRaw('DATE(date_published) as date, COUNT(*) as dom_ad_count')
+        ->whereBetween('date_published', [$from, $to])
+        ->groupBy('date_published')
+        ->orderBy('date_published')
         ->get()
         ->keyBy('date');
 
-        $internationalAdData = InternationalAd::selectRaw('DATE(created_at) as date, COUNT(*) as int_ad_count')
-        ->whereBetween('created_at', [$from, $to])
-        ->groupBy('date')
-        ->orderBy('date')
+        $internationalAdData = InternationalAd::selectRaw('DATE(date_published) as date, COUNT(*) as int_ad_count')
+        ->whereBetween('date_published', [$from, $to])
+        ->groupBy('date_published')
+        ->orderBy('date_published')
         ->get()
         ->keyBy('date');
 
@@ -928,6 +931,8 @@ class AnalyticsController extends Controller
         return response()->json([
             'totalInquiriesCount' => $totalInquiriesCount,
             'totalInternationalCount' =>$totalInternationalCount,
+            'totalDomestic' => $totalDomestic,
+            'totalInternational' => $totalInternational,
             'thisMonthtotalInquiries' => $thisMonthtotalInquiries,
             'thisMonthtotalInternationalInquiries' => $thisMonthtotalInternationalInquiries,
             'totalDomesticCancellations' => $totalDomesticCancellations,
