@@ -124,8 +124,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/order-international-cancellations', [InternationalInquiryController::class, 'orderInternationalCancellations'])->name('order.international.cancellations');
 
-    Route::post('/block-order/{id}', [OrderController::class, 'blockOrder']);
-    Route::post('/block-international-order/{id}', [InternationalOrderController::class, 'blockInternationalOrder']);
+    Route::post('/block-order/{id}', [InquiryController::class, 'blockOrder']);
+    Route::post('/block-international-order/{id}', [InternationalInquiryController::class, 'blockInternationalOrder']);
 
     Route::resource('ads', AdController::class);
     Route::get('/international-ads',[AdController::class,'international_index']);

@@ -18,6 +18,8 @@ use App\Models\Order;
 use App\Models\InternationalOrder;
 use App\Models\BlockedOrder;
 use App\Models\BlockedInternationalOrder;
+use App\Models\InternationalOrderSeller;
+use App\Models\OrderSeller;
 
 class DashboardController extends Controller
 {
@@ -35,93 +37,53 @@ class DashboardController extends Controller
         ->limit(5)
         ->get();
 
-        $today = now()->startOfDay();
+        $today = now()->toDateString();
+        $yesterday = now()->subDay()->toDateString();
+
+
         // Fetch counts for Inquiry
         $inquiryDateRanges = [
-            'today' => Inquiry::whereDate('created_at', $today)->count(),
-            'yesterday' => Inquiry::where('created_at', '>=', now()->subDay())->count(),
-            'last_7_days' => Inquiry::where('created_at', '>=', now()->subDays(7))->count(),
-            'last_30_days' => Inquiry::where('created_at', '>=', now()->subDays(30))->count(),
-            'last_90_days' => Inquiry::where('created_at', '>=', now()->subDays(90))->count(),
-            'last_365_days' => Inquiry::where('created_at', '>=', now()->subDays(365))->count(),
-            'this_month' => Inquiry::whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)
-            ->count(),
-
+            'today' => Inquiry::whereDate('inquiry_date', $today)->count(),
+            'yesterday' => Inquiry::whereDate('inquiry_date', $yesterday)->count(),
         ];
 
         $inquiryOfferDateRanges = [
-            'today' => Inquiry::whereDate('created_at', $today)->where('status', '1')->count(),
-            'yesterday' => Inquiry::where('created_at', '>=', now()->subDay())->where('status', '1')->count(),
-            'last_7_days' => Inquiry::where('created_at', '>=', now()->subDays(7))->where('status', '1')->count(),
-            'last_30_days' => Inquiry::where('created_at', '>=', now()->subDays(30))->where('status', '1')->count(),
-            'last_90_days' => Inquiry::where('created_at', '>=', now()->subDays(90))->where('status', '1')->count(),
-            'last_365_days' => Inquiry::where('created_at', '>=', now()->subDays(365))->where('status', '1')->count(),
-            'this_month' => Inquiry::whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)->where('status', '1')
-            ->count(),
-
+            'today' => Inquiry::whereDate('inquiry_date', $today)->where('status', '1')->count(),
+            'yesterday' => Inquiry::whereDate('inquiry_date', $yesterday)->where('status', '1')->count(),
         ];
 
         $inquiryCancelDateRanges = [
-            'today' => Inquiry::whereDate('created_at', $today)->where('status', '0')->count(),
-            'yesterday' => Inquiry::where('created_at', '>=', now()->subDay())->where('status', '0')->count(),
-            'last_7_days' => Inquiry::where('created_at', '>=', now()->subDays(7))->where('status', '0')->count(),
-            'last_30_days' => Inquiry::where('created_at', '>=', now()->subDays(30))->where('status', '0')->count(),
-            'last_90_days' => Inquiry::where('created_at', '>=', now()->subDays(90))->where('status', '0')->count(),
-            'last_365_days' => Inquiry::where('created_at', '>=', now()->subDays(365))->where('status', '0')->count(),
-            'this_month' => Inquiry::whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)->where('status', '0')
-            ->count(),
+            'today' => Inquiry::whereDate('inquiry_date', $today)->where('status', '0')->count(),
+            'yesterday' => Inquiry::whereDate('inquiry_date', $yesterday)->where('status', '0')->count(),
         ];
+
+        $orderDateRanges = [
+            'today' => Inquiry::whereDate('inquiry_date', $today)->where('offers_status', '1')->count(),
+            'yesterday' => Inquiry::whereDate('inquiry_date', $yesterday)->where('offers_status', '1')->count(),
+        ];
+
 
         // Fetch counts for InternationInquiry
         $interInquiryDateRanges = [
-            'today' => InternationInquiry::whereDate('created_at', $today)->count(),
-            'yesterday' => InternationInquiry::where('created_at', '>=', now()->subDay())->count(),
-            'last_7_days' => InternationInquiry::where('created_at', '>=', now()->subDays(7))->count(),
-            'last_30_days' => InternationInquiry::where('created_at', '>=', now()->subDays(30))->count(),
-            'last_90_days' => InternationInquiry::where('created_at', '>=', now()->subDays(90))->count(),
-            'last_365_days' => InternationInquiry::where('created_at', '>=', now()->subDays(365))->count(),
-            'this_month' => InternationInquiry::whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)
-            ->count(),
+            'today' => InternationInquiry::whereDate('inquiry_date', $today)->count(),
+            'yesterday' => InternationInquiry::whereDate('inquiry_date', $yesterday)->count(),
         ];
 
         $interOfferInquiryDateRanges = [
-            'today' => InternationInquiry::whereDate('created_at', $today)->where('status', '1')->count(),
-            'yesterday' => InternationInquiry::where('created_at', '>=', now()->subDay())->where('status', '1')->count(),
-            'last_7_days' => InternationInquiry::where('created_at', '>=', now()->subDays(7))->where('status', '1')->count(),
-            'last_30_days' => InternationInquiry::where('created_at', '>=', now()->subDays(30))->where('status', '1')->count(),
-            'last_90_days' => InternationInquiry::where('created_at', '>=', now()->subDays(90))->where('status', '1')->count(),
-            'last_365_days' => InternationInquiry::where('created_at', '>=', now()->subDays(365))->where('status', '1')->count(),
-            'this_month' => InternationInquiry::whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)->where('status', '1')
-            ->count(),
+            'today' => InternationInquiry::whereDate('inquiry_date', $today)->where('status', '1')->count(),
+            'yesterday' => InternationInquiry::whereDate('inquiry_date', $yesterday)->where('status', '1')->count(),
         ];
 
         $interCancelInquiryDateRanges = [
-            'today' => InternationInquiry::whereDate('created_at', $today)->where('status', '0')->count(),
-            'yesterday' => InternationInquiry::where('created_at', '>=', now()->subDay())->where('status', '0')->count(),
-            'last_7_days' => InternationInquiry::where('created_at', '>=', now()->subDays(7))->where('status', '0')->count(),
-            'last_30_days' => InternationInquiry::where('created_at', '>=', now()->subDays(30))->where('status', '0')->count(),
-            'last_90_days' => InternationInquiry::where('created_at', '>=', now()->subDays(90))->where('status', '0')->count(),
-            'last_365_days' => InternationInquiry::where('created_at', '>=', now()->subDays(365))->where('status', '0')->count(),
-            'this_month' => InternationInquiry::whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)->where('status', '0')
-            ->count(),
+            'today' => InternationInquiry::whereDate('inquiry_date', $today)->where('status', '0')->count(),
+            'yesterday' => InternationInquiry::whereDate('inquiry_date', $yesterday)->where('status', '0')->count(),
         ];
 
-        $customInquiryDateRange = null;
-        $customInterInquiryDateRange = null;
+        $interOrderDateRanges = [
+            'today' => InternationInquiry::whereDate('inquiry_date', $today)->where('offers_status', '1')->count(),
+            'yesterday' => InternationInquiry::whereDate('inquiry_date', $yesterday)->where('offers_status', '1')->count(),
+        ];
 
-        if ($request->has(['start_date', 'end_date'])) {
-            $startDate = $request->query('start_date');
-            $endDate = $request->query('end_date');
-
-            $customInquiryDateRange = Inquiry::whereBetween('created_at', [$startDate, $endDate])->count();
-            $customInterInquiryDateRange = InternationInquiry::whereBetween('created_at', [$startDate, $endDate])->count();
-        }
 
         $totalInquiriesCount = Inquiry::all()->count();
         $totalInternationalCount = InternationInquiry::all()->count();
@@ -135,6 +97,9 @@ class DashboardController extends Controller
 
         $inquiryOffersCount = Inquiry::where('status','1')->count();
         $interInquiryOffersCount = InternationInquiry::where('status','1')->count();
+
+        $OrdersCount = Order::where('status','2')->count();
+        $interOrdersCount = InternationalOrder::where('status','2')->count();
 
         $inquiryCancelCount = Inquiry::where('status','0')->count();
         $interInquiryCancelCount = InternationInquiry::where('status','0')->count();
@@ -150,7 +115,8 @@ class DashboardController extends Controller
                     'dateRanges' => $inquiryDateRanges,
                     'offerDateRanges' => $inquiryOfferDateRanges,
                     'cancelDateRanges' => $inquiryCancelDateRanges,
-                    'customDateRange' => $customInquiryDateRange
+                    'orders' => $OrdersCount,
+                    'orderDateRanges' => $orderDateRanges
                 ],
                 'interInquiry' => [
                     'name' => 'interInquiry',
@@ -159,7 +125,8 @@ class DashboardController extends Controller
                     'cancellations' => $interInquiryCancelCount,
                     'dateRanges' => $interInquiryDateRanges,
                     'cancelDateRanges' => $interCancelInquiryDateRanges,
-                    'customDateRange' => $customInterInquiryDateRange
+                    'orders' => $interOrdersCount,
+                    'interOrderDateRanges' => $interOrderDateRanges
                 ],
                 'topLocations' => $topLocations,
                 'topInternationalLocations' => $topInternationalLocations,
@@ -188,7 +155,9 @@ class DashboardController extends Controller
             Order::exists() ||
             InternationalOrder :: exists() ||
             BlockedOrder :: exists() ||
-            BlockedInternationalOrder :: exists();
+            BlockedInternationalOrder :: exists() ||
+            OrderSeller::exists() ||
+            InternationalOrderSeller::exists();
 
         if (!$hasData) {
             return response()->json(['message' => 'No data to delete.'], 200);
@@ -211,7 +180,9 @@ class DashboardController extends Controller
             Order::truncate();
             InternationalOrder::truncate();
             BlockedOrder::truncate();
-            BlockedInternationalOrder::truncate();   
+            BlockedInternationalOrder::truncate();  
+            OrderSeller::truncate();
+            InternationalOrderSeller:: truncate();
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
             DB::commit();
@@ -219,7 +190,7 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'message' => 'Failed to delete data',
+                'message' => 'All dashboard data deleted successfully',
                 'error' => $e->getMessage()
             ], 500);
         }
