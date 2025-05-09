@@ -18,7 +18,15 @@ class OrderController extends Controller
     {
         $orders = \App\Models\Order::with([       
                 'sellers',                        
-                'offer.inquiry'])->get();
+                'offer.inquiry'])
+                ->where('status', 2)
+                ->where(function($query) {
+                    $query->whereHas('sellers')
+                          ->orWhereHas('offer.inquiry', function ($subQuery) {
+                              $subQuery->where('offers_status', 1);
+                          });
+                })
+                ->get();
     
         return response()->json($orders);
     }

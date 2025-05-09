@@ -288,7 +288,7 @@ class InternationalInquiryController extends Controller
             'user_id' => 'required|exists:users,id',
         ]);
 
-        if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() ) {
+        if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOrder::where('mobile_number', $request->mobile_number)->exists() ) {
             return response()->json(['message' => 'This inquiry is blocked.'], 403);
         }
 
@@ -630,6 +630,8 @@ class InternationalInquiryController extends Controller
 
     public function orderInternationalCancellations()
     {
+        $combinedResults = collect();
+
         $order_international_cancellations = InternationInquiry::where('status', 1)
             ->where('offers_status', 1)
             ->where('orders_status', 0)
@@ -652,7 +654,19 @@ class InternationalInquiryController extends Controller
                 return $international_inquiry;
             });
 
-        return response()->json($order_international_cancellations);
+        $combinedResults = $combinedResults->merge($order_international_cancellations);
+
+        // Step 2: Get standalone orders where status = 0
+        $internationalorders = \App\Models\InternationalOrder::with(['international_sellers'])
+        ->where('status', 0)
+        ->get();
+
+        // Add to combined list
+        $combinedResults = $combinedResults->merge($internationalorders);
+    
+
+
+        return response()->json($combinedResults);
     }
 
     public function updateInternationInquiryStatus(Request $request, $id)
@@ -663,50 +677,62 @@ class InternationalInquiryController extends Controller
             'orders_status' => 'nullable|integer'
         ]);
 
-        $international_inquiry = InternationInquiry::findOrFail($id);
-        $international_inquiry->status = $request->status;
-        $international_inquiry->offers_status = $request->offers_status ?? $international_inquiry->offers_status;
-        $international_inquiry->orders_status = $request->orders_status ?? $international_inquiry->orders_status;
+        $international_inquiry = InternationInquiry::find($id);
 
-
-        $international_inquiry->save();
-
-        $responseMessage = 'Status updated successfully.';
-
-        if ($request->status == 0) {
-            $responseMessage = 'Inquiry moved to Cancellations.';
-        } elseif ($request->status == 1  && $international_inquiry->offers_status === 2) {
-            $lastOfferNumber = \App\Models\InternationalOffer::max('offer_number') ?? 0;
-            $newOfferNumber = $lastOfferNumber + 1;
+        if ($international_inquiry) {
+            $international_inquiry->status = $request->status ?? $international_inquiry->status;
+            $international_inquiry->offers_status = $request->offers_status ?? $international_inquiry->offers_status;
+            $international_inquiry->orders_status = $request->orders_status ?? $international_inquiry->orders_status;
         
-            $international_offer = \App\Models\InternationalOffer::firstOrNew(['international_inquiry_id' => $international_inquiry->id]);
-            $international_offer->offer_number = $newOfferNumber;
-            $international_offer->international_inquiry_id = $international_inquiry->id;
-            $international_offer->save();
+            $international_inquiry->save();
         
-            $responseMessage = 'International Inquiry moved to Offers and offer number created.';
-        }elseif ($request->status == 1 && $request->offers_status === 0) {
-            $responseMessage = 'International Inquiry moved to Offer Cancellations.';
-        }elseif ($request->status == 1 && $request->offers_status === 1 && $request->orders_status ===0) {
-            $responseMessage = 'Inquiry moved to Orders Cancellations.';
-        }elseif ($request->status == 1 && $request->offers_status === 1) {
-            $lastOrderNumber = \App\Models\InternationalOrder::max('order_number') ?? 56564;
-            $newOrderNumber = $lastOrderNumber + 1;
-                
-            $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+            if ($request->status === 0) {
+                $responseMessage = 'International Inquiry moved to Cancellations.';
+            } elseif ($request->status === 1 && $international_inquiry->offers_status === 2) {
+                // Move to offers
+                $lastOfferNumber = \App\Models\InternationalOffer::max('offer_number') ?? 0;
+                $newOfferNumber = $lastOfferNumber + 1;
         
-            if ($international_offer) {        
-                $international_order = \App\Models\InternationalOrder::firstOrNew(['international_offer_id' => $international_offer->id]);
-                $international_order->order_number = $newOrderNumber;
-                $international_order->international_offer_id = $international_offer->id;
-                $international_order->save();        
-                $responseMessage = 'Internatnional Inquiry moved to Orders and order number updated.';
-            } else {
-                $responseMessage = 'Offer not found for the inquiry.';
+                $international_offer = \App\Models\InternationalOffer::firstOrNew(['international_inquiry_id' => $international_inquiry->id]);
+                $international_offer->offer_number = $newOfferNumber;
+                $international_offer->international_inquiry_id = $international_inquiry->id;
+                $international_offer->save();
+        
+                $responseMessage = 'International Inquiry moved to Offers and offer number created.';
+            } elseif ($request->status === 1 && $request->offers_status === 0) {
+                $responseMessage = 'International Inquiry moved to Offer Cancellations.';
+            } elseif ($request->status === 1 && $request->offers_status === 1 && $request->orders_status === 0) {
+                $responseMessage = 'International Inquiry moved to Orders Cancellations.';
+            } elseif ($request->status === 1 && $request->offers_status === 1 && $request->orders_status === 1) {
+                // Move to orders
+                $lastOrderNumber = \App\Models\InternationalOrder::max('order_number') ?? 56564;
+                $newOrderNumber = $lastOrderNumber + 1;
+        
+                $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
+        
+                if ($international_offer) {
+                    $international_order = \App\Models\InternationalOrder::firstOrNew(['international_offer_id' => $international_offer->id]);
+                    $international_order->order_number = $newOrderNumber;
+                    $international_order->international_offer_id = $international_offer->id;
+                    $international_order->status = $request->orders_status ?? $international_order->status;  // Make sure order table also gets status if needed
+                    $international_order->save();
+        
+                    $responseMessage = 'International Inquiry moved to Orders and order number updated.';
+                } else {
+                    $responseMessage = 'Offer not found for the inquiry.';
+                }
+            }
+        } else {
+            $international_order = InternationalOrder::find($id);
+            if ($international_order) {
+                $international_order->status = $request->orders_status ?? $international_order->status;
+                $international_order->save();
+        
+                $responseMessage = 'Order status updated (without inquiry).';
             }
         }
         
-    
+        
         return response()->json([
             'success' => true,
             'message' => 'Status updated successfully.',

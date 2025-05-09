@@ -16,12 +16,23 @@ class InternationalOrderController extends Controller
 {
     public function index()
     {
-        $international_orders = \App\Models\InternationalOrder::with([       
-                'international_sellers',                        
-                'international_offer.international_inquiry'])->get();
+        $international_orders = \App\Models\InternationalOrder::with([
+            'international_sellers',
+            'international_offer.international_inquiry'
+        ])
+        ->where('status', 2)
+        ->where(function($query) {
+            $query->whereHas('international_sellers')
+                  ->orWhereHas('international_offer.international_inquiry', function ($subQuery) {
+                      $subQuery->where('offers_status', 1);
+                  });
+        })
+        ->get();
     
         return response()->json($international_orders);
+    
     }
+
     
     public function showByOrderId($id)
     {

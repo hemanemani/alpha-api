@@ -32,6 +32,7 @@ class InternationalOrder extends Model
         'logistics_agency',
         'shipping_estimate_value',
         'buyer_final_shipping_value',
+        'status'
     ];
 
     public function international_sellers() {

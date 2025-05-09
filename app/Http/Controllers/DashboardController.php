@@ -14,6 +14,10 @@ use App\Models\BlockedInternationalOffer;
 use App\Models\UploadInquiry;
 use App\Models\UploadInternationalInquiry;
 use Illuminate\Support\Facades\DB;
+use App\Models\Order;
+use App\Models\InternationalOrder;
+use App\Models\BlockedOrder;
+use App\Models\BlockedInternationalOrder;
 
 class DashboardController extends Controller
 {
@@ -180,7 +184,11 @@ class DashboardController extends Controller
             BlockedOffer::exists() ||
             BlockedInternationalOffer::exists() ||
             UploadInquiry::exists() ||
-            UploadInternationalInquiry::exists();
+            UploadInternationalInquiry::exists() ||
+            Order::exists() ||
+            InternationalOrder :: exists() ||
+            BlockedOrder :: exists() ||
+            BlockedInternationalOrder :: exists();
 
         if (!$hasData) {
             return response()->json(['message' => 'No data to delete.'], 200);
@@ -199,7 +207,11 @@ class DashboardController extends Controller
             BlockedOffer::truncate();
             BlockedInternationalOffer::truncate();
             UploadInquiry::truncate();
-            UploadInternationalInquiry::truncate();    
+            UploadInternationalInquiry::truncate(); 
+            Order::truncate();
+            InternationalOrder::truncate();
+            BlockedOrder::truncate();
+            BlockedInternationalOrder::truncate();   
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
             DB::commit();

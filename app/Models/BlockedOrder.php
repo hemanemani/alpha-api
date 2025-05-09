@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class BlockedOffer extends Model
+class BlockedOrder extends Model
 {
     protected $table = 'blocked_orders';
 

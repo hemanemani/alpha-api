@@ -291,7 +291,7 @@ class InquiryController extends Controller
             'user_id' => 'required|exists:users,id',
         ]);
 
-        if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() ) {
+        if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedOrder::where('mobile_number', $request->mobile_number)->exists() ) {
             return response()->json(['message' => 'This inquiry is blocked.'], 403);
         }
 
@@ -637,34 +637,46 @@ class InquiryController extends Controller
     }
 
     public function orderDomesticCancellations()
-{
-    $order_domestic_cancellations = Inquiry::where('status', 1)
+    {
+        $combinedResults = collect();
+
+        // Step 1: Get inquiries matching cancellation logic
+        $inquiries = Inquiry::where('status', 1)
             ->where('offers_status', 1)
-            ->where('orders_status',0)
+            ->where('orders_status', 0)
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_orders');
             })
             ->get()
             ->map(function ($inquiry) {
-                // Get related offers based on inquiry_id
                 $offers = \App\Models\Offer::where('inquiry_id', $inquiry->id)->get();
 
-                // For each offer, find the related order and sellers
                 $offers->map(function ($offer) {
-                    // Find order using offer_id and eager load sellers
                     $order = \App\Models\Order::with('sellers')->where('offer_id', $offer->id)->first();
                     $offer->order = $order;
                     return $offer;
                 });
 
-                // Attach offers to the inquiry
                 $inquiry->offers = $offers;
 
                 return $inquiry;
             });
 
-    return response()->json($order_domestic_cancellations);
-}
+        // Add to combined list
+        $combinedResults = $combinedResults->merge($inquiries);
+
+        // Step 2: Get standalone orders where status = 0
+        $orders = \App\Models\Order::with(['sellers'])
+            ->where('status', 0)
+            ->get();
+
+        // Add to combined list
+        $combinedResults = $combinedResults->merge($orders);
+
+        // Step 3: Return merged list as JSON
+        return response()->json($combinedResults);
+    }
+
 
 
     public function updateInquiryStatus(Request $request, $id)
@@ -675,51 +687,56 @@ class InquiryController extends Controller
             'orders_status' => 'nullable|integer'
         ]);
     
-        $inquiry = Inquiry::findOrFail($id);
-        $inquiry->status = $request->status;
-        $inquiry->offers_status = $request->offers_status ?? $inquiry->offers_status;
-        $inquiry->orders_status = $request->orders_status ?? $inquiry->orders_status;
+        $inquiry = Inquiry::find($id);
 
+        if ($inquiry) {
+            $inquiry->status = $request->status ?? $inquiry->status;
+            $inquiry->offers_status = $request->offers_status ?? $inquiry->offers_status;
+            $inquiry->orders_status = $request->orders_status ?? $inquiry->orders_status;
+            $inquiry->save();        
 
-
-        $inquiry->save();
-
+            $responseMessage = 'Status updated successfully.';
         
-    
-        $responseMessage = 'Status updated successfully.';
-    
-        if ($request->status == 0) {
-            $responseMessage = 'Inquiry moved to Cancellations.';
-        } elseif ($request->status == 1 && $inquiry->offers_status === 2) {
-            $lastOfferNumber = \App\Models\Offer::max('offer_number') ?? 0;
-            $newOfferNumber = $lastOfferNumber + 1;
-    
-            $offer = \App\Models\Offer::firstOrNew(['inquiry_id' => $inquiry->id]);
-            $offer->offer_number = $newOfferNumber;
-            $offer->inquiry_id = $inquiry->id;
-            $offer->save();
-    
-            $responseMessage = 'Inquiry moved to Offers and offer number created.';
-        } elseif ($request->status == 1 && $request->offers_status === 0) {
-            $responseMessage = 'Inquiry moved to Offer Cancellations.';
-        } elseif ($request->status == 1 && $request->offers_status === 1 && $request->orders_status ===0) {
-            $responseMessage = 'Inquiry moved to Orders Cancellations.';
-        } elseif ($request->status == 1 && $request->offers_status === 1) {
-            $lastOrderNumber = \App\Models\Order::max('order_number') ?? 56564;
-            $newOrderNumber = $lastOrderNumber + 1;
-    
-            $offer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();
-    
-            if ($offer) {
-                $order = \App\Models\Order::firstOrNew(['offer_id' => $offer->id]);
-                $order->order_number = $newOrderNumber;
-                $order->offer_id = $offer->id;
-                $order->save();
-    
-                $responseMessage = 'Inquiry moved to Orders and order number updated.';
-            } else {
-                $responseMessage = 'Offer not found for the inquiry.';
+            if ($request->status == 0) {
+                $responseMessage = 'Inquiry moved to Cancellations.';
+            } elseif ($request->status == 1 && $inquiry->offers_status === 2) {
+                $lastOfferNumber = \App\Models\Offer::max('offer_number') ?? 0;
+                $newOfferNumber = $lastOfferNumber + 1;
+        
+                $offer = \App\Models\Offer::firstOrNew(['inquiry_id' => $inquiry->id]);
+                $offer->offer_number = $newOfferNumber;
+                $offer->inquiry_id = $inquiry->id;
+                $offer->save();
+        
+                $responseMessage = 'Inquiry moved to Offers and offer number created.';
+            } elseif ($request->status == 1 && $request->offers_status === 0) {
+                $responseMessage = 'Inquiry moved to Offer Cancellations.';
+            } elseif ($request->status == 1 && $request->offers_status === 1 && $request->orders_status ===0) {
+                $responseMessage = 'Inquiry moved to Orders Cancellations.';
+            } elseif ($request->status == 1 && $request->offers_status === 1) {
+                $lastOrderNumber = \App\Models\Order::max('order_number') ?? 56564;
+                $newOrderNumber = $lastOrderNumber + 1;
+        
+                $offer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();
+        
+                if ($offer) {
+                    $order = \App\Models\Order::firstOrNew(['offer_id' => $offer->id]);
+                    $order->order_number = $newOrderNumber;
+                    $order->offer_id = $offer->id;
+                    $order->save();
+        
+                    $responseMessage = 'Inquiry moved to Orders and order number updated.';
+                } else {
+                    $responseMessage = 'Offer not found for the inquiry.';
+                }
             }
+
+        } else{
+            $order = Order::find($id);
+            $order->status = $request->orders_status ?? $order->status;
+            $order->save();
+    
+            $responseMessage = 'Order status updated (without inquiry).';
         }
     
         return response()->json([
