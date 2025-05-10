@@ -714,7 +714,10 @@ class InquiryController extends Controller
             } elseif ($request->status == 1 && $request->offers_status === 1 && $request->orders_status ===0) {
                 $responseMessage = 'Inquiry moved to Orders Cancellations.';
             } elseif ($request->status == 1 && $request->offers_status === 1) {
-                $lastOrderNumber = \App\Models\Order::max('order_number') ?? 56564;
+                $lastOrderNumber = \App\Models\Order::max('order_number');
+                if ($lastOrderNumber === null || $lastOrderNumber < 56564) {
+                    $lastOrderNumber = 56564;
+                }
                 $newOrderNumber = $lastOrderNumber + 1;
         
                 $offer = \App\Models\Offer::where('inquiry_id', $inquiry->id)->first();

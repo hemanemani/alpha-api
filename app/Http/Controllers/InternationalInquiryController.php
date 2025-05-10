@@ -703,10 +703,14 @@ class InternationalInquiryController extends Controller
                 $responseMessage = 'International Inquiry moved to Offer Cancellations.';
             } elseif ($request->status === 1 && $request->offers_status === 1 && $request->orders_status === 0) {
                 $responseMessage = 'International Inquiry moved to Orders Cancellations.';
-            } elseif ($request->status === 1 && $request->offers_status === 1 && $request->orders_status === 1) {
+            } elseif ($request->status === 1 && $request->offers_status === 1) {
                 // Move to orders
-                $lastOrderNumber = \App\Models\InternationalOrder::max('order_number') ?? 56564;
+                $lastOrderNumber = \App\Models\InternationalOrder::max('order_number');
+                if ($lastOrderNumber === null || $lastOrderNumber < 56564) {
+                    $lastOrderNumber = 56564;
+                }
                 $newOrderNumber = $lastOrderNumber + 1;
+
         
                 $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
         
@@ -714,7 +718,6 @@ class InternationalInquiryController extends Controller
                     $international_order = \App\Models\InternationalOrder::firstOrNew(['international_offer_id' => $international_offer->id]);
                     $international_order->order_number = $newOrderNumber;
                     $international_order->international_offer_id = $international_offer->id;
-                    $international_order->status = $request->orders_status ?? $international_order->status;  // Make sure order table also gets status if needed
                     $international_order->save();
         
                     $responseMessage = 'International Inquiry moved to Orders and order number updated.';
@@ -736,7 +739,7 @@ class InternationalInquiryController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Status updated successfully.',
-            'responseMessage' => $responseMessage ?? ''
+            'responseMessage' => $responseMessage
         ]);
     }
 
@@ -938,7 +941,7 @@ class InternationalInquiryController extends Controller
     /**
      * Remove the specified inquiry from storage.
      *
-     * @param  \App\Models\InternationInquiry  $inquiry
+     * @param  \App\Models\InternationInquiry  $international_inquiry
      * @return \Illuminate\Http\Response
      */
     /**

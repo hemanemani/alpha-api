@@ -258,9 +258,14 @@ class InternationalOrderController extends Controller
 
     public function getNextInternationalOrderNumber()
     {
-        $nextNumber = \App\Models\InternationalOrder::max('order_number') + 1;
+        $lastNumber = \App\Models\InternationalOrder::max('order_number');
+        if ($lastNumber === null || $lastNumber < 56564) {
+            $lastNumber = 56564;
+        }
+        $nextNumber = $lastNumber + 1;
         return response()->json(['next_order_number' => $nextNumber]);
     }
+
     
 
 }

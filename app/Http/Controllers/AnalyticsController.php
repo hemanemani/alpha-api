@@ -512,7 +512,7 @@ class AnalyticsController extends Controller
         ->pluck('specific_product');
 
         //Count how many times each product appeainternationalPs
-        $productCounts = [];
+        $internationalProductCounts = [];
         foreach ($inquiriesWithThirdContact as $productString) {
             $products = array_map('trim', explode(',', $productString));
             foreach ($products as $product) {
