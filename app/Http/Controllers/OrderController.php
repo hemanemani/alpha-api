@@ -14,28 +14,33 @@ use Spatie\Browsershot\Browsershot;
 
 class OrderController extends Controller
 {
-    public function index()
+   public function index()
     {
         $orders = \App\Models\Order::with([       
-                'sellers',                        
-                'offer.inquiry'])
-                ->where('status', 2)
-                ->where(function($query) {
-                    $query->whereHas('sellers')
-                          ->orWhereHas('offer.inquiry', function ($subQuery) {
-                              $subQuery->where('offers_status', 1);
-                          });
-                })
-                ->get();
-    
+                'sellers',                         
+                'offer.inquiry.user',
+                'user'
+            ])
+            ->where('status', 2)
+            ->where(function($query) {
+                $query->whereHas('sellers')
+                    ->orWhereHas('offer.inquiry', function ($subQuery) {
+                        $subQuery->where('orders_status',2);
+                    });
+            })
+            ->get();
+            
+
         return response()->json($orders);
     }
+
 
     public function showByOrderId($id)
     {
         $order = \App\Models\Order::with([
             'sellers',
-            'offer.inquiry'
+            'offer.inquiry.user',
+            'user'
         ])->where('id', $id)->first();
                 
         if (!$order) {
@@ -76,6 +81,8 @@ class OrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'user_id' => 'required|exists:users,id',
+
     
             // Sellers array validation
             'sellers' => 'required|array|min:1',
@@ -120,6 +127,7 @@ class OrderController extends Controller
         ]);
     
         $orderData = collect($validatedData)->except('sellers')->toArray();
+        
         $order = Order::create($orderData);
     
         OrderSeller::where('order_id', $order->id)->delete();
@@ -162,6 +170,8 @@ class OrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'user_id' => 'required|exists:users,id',
+
     
             // Sellers array validation
             'sellers' => 'required|array|min:1',
@@ -204,17 +214,32 @@ class OrderController extends Controller
             'sellers.*.invoicing_amount' => 'nullable|numeric',
             'sellers.*.expenses' => 'nullable|numeric',
         ]);
-    
-        $order = Order::where('offer_id', $request->offer_id)->first();
+
+        if ($request->has('offer_id') && $request->offer_id) {
+            $order = Order::where('offer_id', $request->offer_id)->first();
+        } else {
+            $order = Order::where('id', $request->id)->first();
+        }
+
+        Log::info($order);
+
+        if (!$order) {
+            return response()->json([
+                'message' => 'Order not found',
+            ], 404);
+        }
 
         $isNew = false;
-    
-        if ($order) {
-            $order->update($validatedData);
-        } else {
-            $order = Order::create($validatedData);
-            $isNew = true;
-        }
+
+        $order->fill($validatedData);
+        $orderIsDirty = $order->isDirty();
+            
+        if ($orderIsDirty) {
+
+            $orderData = collect($validatedData)->except('sellers')->toArray();
+            $order->update($orderData);
+
+        } 
     
         OrderSeller::where('order_id', $order->id)->delete();
     

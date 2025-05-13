@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\OrderSeller;
 use App\Models\Offer;
+use App\Models\User;
 
 
 class Order extends Model
@@ -33,8 +34,14 @@ class Order extends Model
         'logistics_agency',
         'shipping_estimate_value',
         'buyer_final_shipping_value',
-        'status'
+        'status',
+        'user_id'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class,'user_id');
+    }
 
     public function sellers() {
         return $this->hasMany(OrderSeller::class);

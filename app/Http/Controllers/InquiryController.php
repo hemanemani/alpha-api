@@ -147,7 +147,8 @@ class InquiryController extends Controller
      */
     public function approved_offers()
     {
-        $approved_offers = Inquiry::where('status', 1)
+        $approved_offers = Inquiry::with('user') 
+            ->where('status', 1)
             ->where('offers_status',2)
             ->get()
             ->map(function ($inquiry) {
@@ -181,7 +182,8 @@ class InquiryController extends Controller
     {
 
         $blockedNumbers = DB::table('blocked_inquiries')->pluck('mobile_number')->toArray();
-        $cancelled_offers = Inquiry::where('status', 0)
+        $cancelled_offers = Inquiry::with('user')
+            ->where('status', 0)
             ->whereNotIn('mobile_number', $blockedNumbers)
             ->get();
     
@@ -536,27 +538,56 @@ class InquiryController extends Controller
         ? \Carbon\Carbon::parse($request->third_contact_date)->format('Y-m-d') 
         : null;
 
-        $inquiry->update([
-            'inquiry_number' => $validated['inquiry_number'] ?? $inquiry->inquiry_number,
-            'mobile_number' => $validated['mobile_number'],
-            'inquiry_date' => $inquiry_date,
-            'product_categories' => $validated['product_categories'],
-            'specific_product' => $validated['specific_product'],
-            'name' => $validated['name'],
-            'location' => $validated['location'],
-            'inquiry_through' => $validated['inquiry_through'],
-            'inquiry_reference' => $validated['inquiry_reference'],
-            'first_contact_date' => $first_contact_date,
-            'first_response' => $validated['first_response'],
-            'second_contact_date' => $second_contact_date,
-            'second_response' => $validated['second_response'],
-            'third_contact_date' => $third_contact_date,
-            'third_response' => $validated['third_response'],
-            'notes' => $validated['notes'],
-            'user_id' => $validated['user_id'],
-            'status' => $validated['status'],
-            'offers_status' => $request->has('offers_status') ? $validated['offers_status'] : 2,
-        ]);
+        
+
+        // $inquiry->update([
+        //     'inquiry_number' => $validated['inquiry_number'] ?? $inquiry->inquiry_number,
+        //     'mobile_number' => $validated['mobile_number'],
+        //     'inquiry_date' => $inquiry_date,
+        //     'product_categories' => $validated['product_categories'],
+        //     'specific_product' => $validated['specific_product'],
+        //     'name' => $validated['name'],
+        //     'location' => $validated['location'],
+        //     'inquiry_through' => $validated['inquiry_through'],
+        //     'inquiry_reference' => $validated['inquiry_reference'],
+        //     'first_contact_date' => $first_contact_date,
+        //     'first_response' => $validated['first_response'],
+        //     'second_contact_date' => $second_contact_date,
+        //     'second_response' => $validated['second_response'],
+        //     'third_contact_date' => $third_contact_date,
+        //     'third_response' => $validated['third_response'],
+        //     'notes' => $validated['notes'],
+        //     'user_id' => $validated['user_id'],
+        //     'status' => $validated['status'],
+        //     'offers_status' => $request->has('offers_status') ? $validated['offers_status'] : 2,
+        // ]);
+
+        $inquiry->inquiry_number = $validated['inquiry_number'] ?? $inquiry->inquiry_number;
+        $inquiry->mobile_number = $validated['mobile_number'];
+        $inquiry->inquiry_date = $inquiry_date;
+        $inquiry->product_categories = $validated['product_categories'];
+        $inquiry->specific_product = $validated['specific_product'];
+        $inquiry->name = $validated['name'];
+        $inquiry->location = $validated['location'];
+        $inquiry->inquiry_through = $validated['inquiry_through'];
+        $inquiry->inquiry_reference = $validated['inquiry_reference'];
+        $inquiry->first_contact_date = $first_contact_date;
+        $inquiry->first_response = $validated['first_response'];
+        $inquiry->second_contact_date = $second_contact_date;
+        $inquiry->second_response = $validated['second_response'];
+        $inquiry->third_contact_date = $third_contact_date;
+        $inquiry->third_response = $validated['third_response'];
+        $inquiry->notes = $validated['notes'];
+        $inquiry->status = $validated['status'];
+        $inquiry->offers_status = $request->has('offers_status') ? $validated['offers_status'] : 2;
+
+        // Check if any field was actually modified
+        if ($inquiry->isDirty()) {
+            $inquiry->user_id = $validated['user_id'];
+        }
+
+        $inquiry->save();
+
 
           // Offers
         
@@ -621,7 +652,8 @@ class InquiryController extends Controller
 
     public function offerDomesticCancellations()
     {
-        $offer_domestic_cancellations = Inquiry::where('status', 1)
+        $offer_domestic_cancellations = Inquiry::with('user')
+            ->where('status', 1)
             ->where('offers_status', 0)
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_domestic_offers');
@@ -641,7 +673,8 @@ class InquiryController extends Controller
         $combinedResults = collect();
 
         // Step 1: Get inquiries matching cancellation logic
-        $inquiries = Inquiry::where('status', 1)
+        $inquiries = Inquiry::with('user')
+            ->where('status', 1)
             ->where('offers_status', 1)
             ->where('orders_status', 0)
             ->whereNotIn('mobile_number', function ($subquery) {
@@ -652,7 +685,7 @@ class InquiryController extends Controller
                 $offers = \App\Models\Offer::where('inquiry_id', $inquiry->id)->get();
 
                 $offers->map(function ($offer) {
-                    $order = \App\Models\Order::with('sellers')->where('offer_id', $offer->id)->first();
+                    $order = \App\Models\Order::with(['sellers','user'])->where('offer_id', $offer->id)->first();
                     $offer->order = $order;
                     return $offer;
                 });
@@ -662,13 +695,16 @@ class InquiryController extends Controller
                 return $inquiry;
             });
 
+
         // Add to combined list
         $combinedResults = $combinedResults->merge($inquiries);
 
         // Step 2: Get standalone orders where status = 0
-        $orders = \App\Models\Order::with(['sellers'])
+        $orders = \App\Models\Order::with(['sellers','user'])
             ->where('status', 0)
             ->get();
+
+        Log::info($orders);
 
         // Add to combined list
         $combinedResults = $combinedResults->merge($orders);
@@ -684,15 +720,37 @@ class InquiryController extends Controller
         $request->validate([
             'status' => 'nullable|integer',
             'offers_status' => 'nullable|integer',
-            'orders_status' => 'nullable|integer'
+            'orders_status' => 'nullable|integer',
+            'user_id' => 'required|exists:users,id',
         ]);
+
+        $order = Order::find($id);
+
+        // Step 1: If order exists and offer_id is null → update order only
+        if ($order && is_null($order->offer_id)) {
+            $order->status = $request->orders_status ?? $order->status;
+            $order->user_id = $request->user_id ?? $order->user_id;
+            $order->save();
+
+
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Standalone Order status updated successfully.',
+                'responseMessage' => 'Order status updated (without inquiry).'
+            ]);
+            
+        }
+
+
+
     
         $inquiry = Inquiry::find($id);
-
         if ($inquiry) {
             $inquiry->status = $request->status ?? $inquiry->status;
             $inquiry->offers_status = $request->offers_status ?? $inquiry->offers_status;
             $inquiry->orders_status = $request->orders_status ?? $inquiry->orders_status;
+            $inquiry->user_id = $request->user_id ?? $inquiry->user_id;
             $inquiry->save();        
 
             $responseMessage = 'Status updated successfully.';
@@ -734,19 +792,21 @@ class InquiryController extends Controller
                 }
             }
 
-        } else{
-            $order = Order::find($id);
-            $order->status = $request->orders_status ?? $order->status;
-            $order->save();
-    
-            $responseMessage = 'Order status updated (without inquiry).';
-        }
-    
-        return response()->json([
+            return response()->json([
             'success' => true,
             'message' => 'Status updated successfully.',
             'responseMessage' => $responseMessage
         ]);
+
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Record not found.'
+        ], 404);
+
+    
+        
     }
     
 

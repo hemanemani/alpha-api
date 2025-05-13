@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use App\Models\Inquiry;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\UploadInquiry;
+use App\Models\Order;
 
 
 class User extends Authenticatable
@@ -77,6 +78,10 @@ class User extends Authenticatable
     public function bulk_uploads()
     {
         return $this->hasMany(UploadInquiry::class,'uploaded_by');
+    }
+     public function orders()
+    {
+        return $this->hasMany(Order::class,'user_id');
     }
 
 }
