@@ -18,13 +18,14 @@ class InternationalOrderController extends Controller
     {
         $international_orders = \App\Models\InternationalOrder::with([
             'international_sellers',
-            'international_offer.international_inquiry'
+            'international_offer.international_inquiry.user',
+            'user'
         ])
         ->where('status', 2)
         ->where(function($query) {
             $query->whereHas('international_sellers')
                   ->orWhereHas('international_offer.international_inquiry', function ($subQuery) {
-                      $subQuery->where('offers_status', 1);
+                      $subQuery->where('orders_status', 2);
                   });
         })
         ->get();
@@ -43,7 +44,8 @@ class InternationalOrderController extends Controller
 
         $international_order = \App\Models\InternationalOrder::with([
             'international_sellers',
-            'international_offer.international_inquiry'
+            'international_offer.international_inquiry.user',
+            'user'
         ])->where('id', $id)->first();
                 
         if (!$international_order) {
@@ -83,6 +85,8 @@ class InternationalOrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'user_id' => 'required|exists:users,id',
+
     
             // Sellers array validation
             'international_sellers' => 'required|array|min:1',
@@ -149,7 +153,7 @@ class InternationalOrderController extends Controller
             'international_offer_id'  => 'nullable|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
-            'mobile_number' => 'string|max:20',
+            'mobile_number' => 'nullable|string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
             'quantity' => 'nullable|numeric',
             'seller_offer_rate' => 'nullable|numeric',
@@ -168,6 +172,7 @@ class InternationalOrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'user_id' => 'required|exists:users,id',
     
             // Sellers array validation
             'international_sellers' => 'required|array|min:1',
@@ -209,18 +214,29 @@ class InternationalOrderController extends Controller
             'international_sellers.*.invoicing_amount' => 'nullable|numeric',
             'international_sellers.*.expenses' => 'nullable|numeric',
         ]);
-    
-        $international_order = InternationalOrder::where('international_offer_id', $request->international_offer_id)->first();
 
-        $isNew = false;
-    
-        if ($international_order) {
-            $international_order->update($validatedData);
+        if ($request->has('international_offer_id') && $request->international_offer_id) {
+            $international_order = InternationalOrder::where('international_offer_id', $request->international_offer_id)->first();
+
         } else {
-            $international_order = InternationalOrder::create($validatedData);
-            $isNew = true;
+            $international_order = InternationalOrder::where('id', $request->id)->first();
         }
 
+        if (!$international_order) {
+            return response()->json([
+                'message' => 'International Order not found',
+            ], 404);
+        }
+    
+
+        $international_order->fill($validatedData);
+        $orderIsDirty = $international_order->isDirty();
+            
+        if ($orderIsDirty) {
+            $orderData = collect($validatedData)->except('international_sellers')->toArray();
+            $international_order->update($orderData);
+        } 
+    
     
         InternationalOrderSeller::where('international_order_id', $international_order->id)->delete();
     
@@ -231,7 +247,7 @@ class InternationalOrderController extends Controller
         
     
         return response()->json([
-            'message' => $isNew ? 'Order created successfully' : 'Order updated successfully',
+            'message' => 'International Order updated successfully',
             'international_order' => $international_order,
             'international_sellers' => $international_order->international_sellers,
         ]);

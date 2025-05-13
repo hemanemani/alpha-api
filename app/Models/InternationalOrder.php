@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\InternationalOrderSeller;
 use App\Models\InternationalOffer;
+use App\Models\User;
 
 class InternationalOrder extends Model
 {
@@ -32,7 +33,8 @@ class InternationalOrder extends Model
         'logistics_agency',
         'shipping_estimate_value',
         'buyer_final_shipping_value',
-        'status'
+        'status',
+        'user_id'
     ];
 
     public function international_sellers() {
@@ -43,5 +45,9 @@ class InternationalOrder extends Model
         return $this->belongsTo(\App\Models\InternationalOffer::class, 'international_offer_id');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class,'user_id');
+    }
 
 }

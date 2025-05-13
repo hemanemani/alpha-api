@@ -221,15 +221,11 @@ class OrderController extends Controller
             $order = Order::where('id', $request->id)->first();
         }
 
-        Log::info($order);
-
         if (!$order) {
             return response()->json([
                 'message' => 'Order not found',
             ], 404);
         }
-
-        $isNew = false;
 
         $order->fill($validatedData);
         $orderIsDirty = $order->isDirty();
@@ -250,7 +246,7 @@ class OrderController extends Controller
         
     
         return response()->json([
-            'message' => $isNew ? 'Order created successfully' : 'Order updated successfully',
+            'message' => 'Order updated successfully',
             'order' => $order,
             'sellers' => $order->sellers,
         ]);

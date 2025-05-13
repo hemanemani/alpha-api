@@ -18,6 +18,8 @@ use App\Rules\UniqueMobileAcrossTables;
 use App\Models\BlockedInternationalOrder;
 use App\Models\InternationalOrderSeller;
 use App\Models\InternationalOrder;
+use Illuminate\Support\Facades\Log;
+
 
 class InternationalInquiryController extends Controller
 {
@@ -145,7 +147,8 @@ class InternationalInquiryController extends Controller
 
     public function approved_offers()
     {
-        $approved_offers = InternationInquiry::where('status', 1)
+        $approved_offers = InternationInquiry::with('user')
+            ->where('status', 1)
             ->where('offers_status',2)
             ->get()
             ->map(function ($international_inquiry) {
@@ -176,7 +179,8 @@ class InternationalInquiryController extends Controller
     public function cancellation_offers()
     {
         $blockedNumbers = DB::table('blocked_international_inquiries')->pluck('mobile_number')->toArray();
-        $cancelled_offers = InternationInquiry::where('status', 0)
+        $cancelled_offers = InternationInquiry::with('user')
+        ->where('status', 0)
         ->whereNotIn('mobile_number', $blockedNumbers)
         ->get();
         return response()->json($cancelled_offers);
@@ -524,28 +528,54 @@ class InternationalInquiryController extends Controller
         $second_contact_date = $this->parseDate($request->second_contact_date);
         $third_contact_date = $this->parseDate($request->third_contact_date);
     
-        $international_inquiry->update([
-            'inquiry_number' => $validated['inquiry_number'],
-            'mobile_number' => $validated['mobile_number'],
-            'inquiry_date' => $inquiry_date,
-            'product_categories' => $validated['product_categories'],
-            'specific_product' => $validated['specific_product'],
-            'name' => $validated['name'],
-            'location' => $validated['location'],
-            'inquiry_through' => $validated['inquiry_through'],
-            'inquiry_reference' => $validated['inquiry_reference'],
-            'first_contact_date' => $first_contact_date,
-            'first_response' => $validated['first_response'],
-            'second_contact_date' => $second_contact_date,
-            'second_response' => $validated['second_response'],
-            'third_contact_date' => $third_contact_date,
-            'third_response' => $validated['third_response'],
-            'notes' => $validated['notes'],
-            'user_id' => $validated['user_id'],
-            'status' => $validated['status'],
-            'offers_status' => $request->has('offers_status') ? $validated['offers_status'] : 2,
+        // $international_inquiry->update([
+        //     'inquiry_number' => $validated['inquiry_number'],
+        //     'mobile_number' => $validated['mobile_number'],
+        //     'inquiry_date' => $inquiry_date,
+        //     'product_categories' => $validated['product_categories'],
+        //     'specific_product' => $validated['specific_product'],
+        //     'name' => $validated['name'],
+        //     'location' => $validated['location'],
+        //     'inquiry_through' => $validated['inquiry_through'],
+        //     'inquiry_reference' => $validated['inquiry_reference'],
+        //     'first_contact_date' => $first_contact_date,
+        //     'first_response' => $validated['first_response'],
+        //     'second_contact_date' => $second_contact_date,
+        //     'second_response' => $validated['second_response'],
+        //     'third_contact_date' => $third_contact_date,
+        //     'third_response' => $validated['third_response'],
+        //     'notes' => $validated['notes'],
+        //     'user_id' => $validated['user_id'],
+        //     'status' => $validated['status'],
+        //     'offers_status' => $request->has('offers_status') ? $validated['offers_status'] : 2,
 
-        ]);
+        // ]);
+
+        $international_inquiry->inquiry_number = $validated['inquiry_number'] ?? $inquiry->inquiry_number;
+        $international_inquiry->mobile_number = $validated['mobile_number'];
+        $international_inquiry->inquiry_date = $inquiry_date;
+        $international_inquiry->product_categories = $validated['product_categories'];
+        $international_inquiry->specific_product = $validated['specific_product'];
+        $international_inquiry->name = $validated['name'];
+        $international_inquiry->location = $validated['location'];
+        $international_inquiry->inquiry_through = $validated['inquiry_through'];
+        $international_inquiry->inquiry_reference = $validated['inquiry_reference'];
+        $international_inquiry->first_contact_date = $first_contact_date;
+        $international_inquiry->first_response = $validated['first_response'];
+        $international_inquiry->second_contact_date = $second_contact_date;
+        $international_inquiry->second_response = $validated['second_response'];
+        $international_inquiry->third_contact_date = $third_contact_date;
+        $international_inquiry->third_response = $validated['third_response'];
+        $international_inquiry->notes = $validated['notes'];
+        $international_inquiry->status = $validated['status'];
+        $international_inquiry->offers_status = $request->has('offers_status') ? $validated['offers_status'] : 2;
+
+        // Check if any field was actually modified
+        if ($international_inquiry->isDirty()) {
+            $international_inquiry->user_id = $validated['user_id'];
+        }
+
+        $international_inquiry->save();
 
         $offerData = $request->input('offer_data', []);
 
@@ -612,7 +642,8 @@ class InternationalInquiryController extends Controller
     public function offerInternationalCancellations()
     {
 
-        $offer_international_cancellations = InternationInquiry::where('status', 1)
+        $offer_international_cancellations = InternationInquiry::with('user')
+            ->where('status', 1)
             ->where('offers_status', 0)
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_international_offers');
@@ -632,7 +663,8 @@ class InternationalInquiryController extends Controller
     {
         $combinedResults = collect();
 
-        $order_international_cancellations = InternationInquiry::where('status', 1)
+        $order_international_cancellations = InternationInquiry::with('user')
+            ->where('status', 1)
             ->where('offers_status', 1)
             ->where('orders_status', 0)
             ->whereNotIn('mobile_number', function ($subquery) {
@@ -643,7 +675,7 @@ class InternationalInquiryController extends Controller
                 $international_offers = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->get();
 
                 $international_offers->map(function ($international_offer) {
-                    $international_order = \App\Models\InternationalOrder::with('international_sellers')->where('international_offer_id', $international_offer->id)->first();
+                    $international_order = \App\Models\InternationalOrder::with('international_sellers','user')->where('international_offer_id', $international_offer->id)->first();
                     $international_offer->international_order = $international_order;
                     return $international_offer;
                 });
@@ -657,7 +689,7 @@ class InternationalInquiryController extends Controller
         $combinedResults = $combinedResults->merge($order_international_cancellations);
 
         // Step 2: Get standalone orders where status = 0
-        $internationalorders = \App\Models\InternationalOrder::with(['international_sellers'])
+        $internationalorders = \App\Models\InternationalOrder::with(['international_sellers','user'])
         ->where('status', 0)
         ->get();
 
@@ -674,15 +706,37 @@ class InternationalInquiryController extends Controller
         $request->validate([
             'status' => 'nullable|integer',
             'offers_status' => 'nullable|integer',
-            'orders_status' => 'nullable|integer'
+            'orders_status' => 'nullable|integer',
+            'user_id' => 'required|exists:users,id',
+
         ]);
 
+        $international_order = InternationalOrder::find($id);
+
+        if ($international_order && is_null($international_order->international_offer_id)) {
+            $international_order->status = $request->orders_status ?? $international_order->status;
+            $international_order->user_id = $request->user_id ?? $international_order->user_id;
+            $international_order->save();
+
+
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Standalone Order status updated successfully.',
+                'responseMessage' => 'International Order status updated (without inquiry).'
+            ]);
+            
+        }
+
         $international_inquiry = InternationInquiry::find($id);
+
 
         if ($international_inquiry) {
             $international_inquiry->status = $request->status ?? $international_inquiry->status;
             $international_inquiry->offers_status = $request->offers_status ?? $international_inquiry->offers_status;
             $international_inquiry->orders_status = $request->orders_status ?? $international_inquiry->orders_status;
+            $international_inquiry->user_id = $request->user_id ?? $international_inquiry->user_id;
+
         
             $international_inquiry->save();
         

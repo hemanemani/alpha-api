@@ -10,6 +10,8 @@ use App\Models\Inquiry;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\UploadInquiry;
 use App\Models\Order;
+use App\Models\InternationInquiry;
+use App\Models\InternationalOrder;
 
 
 class User extends Authenticatable
@@ -69,7 +71,7 @@ class User extends Authenticatable
     }
     public function international_inquiries()
     {
-        return $this->hasMany(Inquiry::class,'user_id');
+        return $this->hasMany(InternationInquiry::class,'user_id');
     }
     public function hasAccess($type)
     {
@@ -82,6 +84,10 @@ class User extends Authenticatable
      public function orders()
     {
         return $this->hasMany(Order::class,'user_id');
+    }
+    public function international_orders()
+    {
+        return $this->hasMany(InternationalOrder::class,'user_id');
     }
 
 }

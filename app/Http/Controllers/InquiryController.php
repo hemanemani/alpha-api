@@ -704,8 +704,6 @@ class InquiryController extends Controller
             ->where('status', 0)
             ->get();
 
-        Log::info($orders);
-
         // Add to combined list
         $combinedResults = $combinedResults->merge($orders);
 
@@ -741,7 +739,6 @@ class InquiryController extends Controller
             ]);
             
         }
-
 
 
     
