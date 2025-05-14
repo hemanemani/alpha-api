@@ -147,7 +147,7 @@ class InternationalInquiryController extends Controller
 
     public function approved_offers()
     {
-        $approved_offers = InternationInquiry::with('user')
+        $approved_offers = InternationInquiry::with(['user','international_offers'])
             ->where('status', 1)
             ->where('offers_status',2)
             ->get()
@@ -570,14 +570,13 @@ class InternationalInquiryController extends Controller
         $international_inquiry->status = $validated['status'];
         $international_inquiry->offers_status = $request->has('offers_status') ? $validated['offers_status'] : 2;
 
-        // Check if any field was actually modified
-        if ($international_inquiry->isDirty()) {
-            $international_inquiry->user_id = $validated['user_id'];
-        }
-
         $international_inquiry->save();
 
         $offerData = $request->input('offer_data', []);
+
+        $offer_date = isset($offerData['offer_date']) 
+        ? \Carbon\Carbon::parse($offerData['offer_date']) // Direct parsing
+        : null;
 
         $communication_date = isset($offerData['communication_date']) 
         ? \Carbon\Carbon::parse($offerData['communication_date']) // Direct parsing
@@ -606,6 +605,7 @@ class InternationalInquiryController extends Controller
                 ['international_inquiry_id' => $international_inquiry->id],
                 [
                     'offer_number' => $existingInternationalOffer->offer_number ?? $newInternationalOfferNumber,
+                    'offer_date' => $offer_date,
                     'communication_date' => $communication_date,
                     'received_sample_amount' => $offerData['received_sample_amount'] ?? null,
                     'sent_sample_amount' => $offerData['sent_sample_amount'] ?? null,
@@ -617,6 +617,14 @@ class InternationalInquiryController extends Controller
 
                 ]
             );
+
+            // Save offer if it changed 
+
+            if ($international_offer->isDirty()) {
+                $international_offer->save();
+            }
+
+
             if ($international_inquiry->offers_status == 1) {
                 $lastInternationalOrderNumber = \App\Models\InternationalOrder::max('order_number') ?? 56564;
                 $newInternationalOrderNumber = $lastInternationalOrderNumber + 1;
@@ -629,7 +637,16 @@ class InternationalInquiryController extends Controller
         }else {
             $international_offer = null;
         }
-    
+
+        // ---- Dirty check: update user_id if inquiry OR offer is modified ----
+
+        if (
+        $international_inquiry->wasChanged() ||
+        ($international_offer instanceof \App\Models\InternationalOffer && $international_offer->wasChanged())
+        ) {
+            $international_inquiry->user_id = $validated['user_id'];
+            $international_inquiry->save();
+        }
 
         return response()->json([
             'message' => 'Inquiry updated successfully.',
@@ -642,7 +659,7 @@ class InternationalInquiryController extends Controller
     public function offerInternationalCancellations()
     {
 
-        $offer_international_cancellations = InternationInquiry::with('user')
+        $offer_international_cancellations = InternationInquiry::with(['user','international_offers'])
             ->where('status', 1)
             ->where('offers_status', 0)
             ->whereNotIn('mobile_number', function ($subquery) {

@@ -45,6 +45,8 @@ class AdController extends Controller
             'post_save'           => 'nullable|integer|min:0',
             'total_amount_spend'  => 'nullable|numeric|min:0',
             'duration'            => 'nullable|string|max:50',
+            'post_type'            => 'nullable|string|max:100',
+
         ]);
 
         if ($data['type'] === 'domestic') {
@@ -111,6 +113,8 @@ class AdController extends Controller
                 'post_save'           => 'nullable|integer|min:0',
                 'total_amount_spend'  => 'nullable|numeric|min:0',
                 'duration'            => 'nullable|string|max:50',
+                'post_type'            => 'nullable|string|max:100',
+
             ]);
         
             if (($data['type'] ?? null) === 'international') {

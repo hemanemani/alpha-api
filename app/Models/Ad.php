@@ -26,5 +26,6 @@ class Ad extends Model
         'post_save',
         'total_amount_spend',
         'duration',
+        'post_type'
     ];
 }

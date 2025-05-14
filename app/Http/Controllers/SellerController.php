@@ -34,6 +34,8 @@ class SellerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
+            'type' => 'nullable|string',
+            'location' => 'nullable|string',
             'mobile_number' => 'required|string|max:255',
             'email' => 'nullable|email|unique:sellers,email',
             'gst' => 'nullable|string|max:255',
@@ -46,6 +48,9 @@ class SellerController extends Controller
             'products.*.name' => 'nullable|string',
             'products.*.seller_price' => 'nullable|numeric',
             'products.*.price' => 'nullable|numeric',
+            'products.*.moq' => 'nullable|string',
+            'products.*.remarks' => 'nullable|string',
+            'products.*.rate' => 'nullable|numeric',
     
         ]);
 
@@ -55,6 +60,8 @@ class SellerController extends Controller
                 'name' => $validated['name'],
                 'company_name' => $validated['company_name'] ?? null,
                 'mobile_number' => $validated['mobile_number'],
+                'type' => $validated['type'] ?? null,
+                'location' => $validated['location'] ?? null,
                 'email' => $validated['email'] ?? null,
                 'gst' => $validated['gst'] ?? null,
                 'pan' => $validated['pan'] ?? null,
@@ -89,6 +96,8 @@ class SellerController extends Controller
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'company_name' => 'nullable|string|max:255',
+            'type' => 'nullable|string',
+            'location' => 'nullable|string',
             'mobile_number' => 'sometimes|string|max:255',
             'email' => 'nullable|email|unique:sellers,email,' . $seller->id,
             'gst' => 'nullable|string|max:255',
@@ -101,6 +110,9 @@ class SellerController extends Controller
             'products.*.name' => 'nullable|string',
             'products.*.seller_price' => 'nullable|numeric',
             'products.*.price' => 'nullable|numeric',
+            'products.*.moq' => 'nullable|string',
+            'products.*.remarks' => 'nullable|string',
+            'products.*.rate' => 'nullable|numeric',
         ]);
 
         try{
@@ -108,6 +120,8 @@ class SellerController extends Controller
                 'name' => $request->name,
                 'company_name' => $request->company_name,
                 'mobile_number' => $request->mobile_number,
+                'type' => $request->type,
+                'location' => $request->location,
                 'email' => $request->email,
                 'gst' => $request->gst,
                 'pan'  => $request->pan,

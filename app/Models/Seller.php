@@ -15,6 +15,8 @@ class Seller extends Model
         'name',
         'company_name',
         'mobile_number',
+        'location',
+        'type',
         'email',
         'gst',
         'pan',
