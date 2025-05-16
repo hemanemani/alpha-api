@@ -47,7 +47,7 @@ class InternationalInquiryController extends Controller
      */
     public function index()
     {
-        $inquiries = InternationInquiry::with('user')->where('status','2')->get();
+        $inquiries = InternationInquiry::with('user')->where('status','2')->orderBy('id', 'desc')->get();
         return response()->json($inquiries);
     }
 
@@ -150,6 +150,7 @@ class InternationalInquiryController extends Controller
         $approved_offers = InternationInquiry::with(['user','international_offers'])
             ->where('status', 1)
             ->where('offers_status',2)
+            ->orderBy('id', 'desc')
             ->get()
             ->map(function ($international_inquiry) {
                 $international_offer = \App\Models\InternationalOffer::where('international_inquiry_id', $international_inquiry->id)->first();
@@ -181,6 +182,7 @@ class InternationalInquiryController extends Controller
         $blockedNumbers = DB::table('blocked_international_inquiries')->pluck('mobile_number')->toArray();
         $cancelled_offers = InternationInquiry::with('user')
         ->where('status', 0)
+        ->orderBy('id', 'desc')
         ->whereNotIn('mobile_number', $blockedNumbers)
         ->get();
         return response()->json($cancelled_offers);
@@ -290,6 +292,8 @@ class InternationalInquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
+            'select_user' => 'nullable|string'
+
         ]);
 
         if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOrder::where('mobile_number', $request->mobile_number)->exists() ) {
@@ -332,6 +336,7 @@ class InternationalInquiryController extends Controller
             'second_response' => $validated['second_response'],
             'third_contact_date' => $third_contact_date,
             'third_response' => $validated['third_response'],
+            'select_user' => $validated['select_user'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
 
@@ -499,6 +504,7 @@ class InternationalInquiryController extends Controller
             'third_contact_date' => 'nullable|date',
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
+            'select_user' => 'nullable|string',
             'user_id' => 'sometimes|exists:users,id',
             'status' => 'nullable|integer',
             'offers_status' => 'nullable|integer',
@@ -569,6 +575,7 @@ class InternationalInquiryController extends Controller
         $international_inquiry->notes = $validated['notes'];
         $international_inquiry->status = $validated['status'];
         $international_inquiry->offers_status = $request->has('offers_status') ? $validated['offers_status'] : 2;
+        $inquiry->select_user = $validated['select_user'];
 
         $international_inquiry->save();
 
@@ -662,6 +669,7 @@ class InternationalInquiryController extends Controller
         $offer_international_cancellations = InternationInquiry::with(['user','international_offers'])
             ->where('status', 1)
             ->where('offers_status', 0)
+            ->orderBy('id', 'desc')
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_international_offers');
             })
@@ -684,6 +692,7 @@ class InternationalInquiryController extends Controller
             ->where('status', 1)
             ->where('offers_status', 1)
             ->where('orders_status', 0)
+            ->orderBy('id', 'desc')
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_international_orders');
             })

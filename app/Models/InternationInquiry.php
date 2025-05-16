@@ -30,7 +30,8 @@ class InternationInquiry extends Model
         'user_id',
         'status',
         'offers_status',
-        'orders_status'
+        'orders_status',
+        'select_user'
     ];
     public function user()
     {

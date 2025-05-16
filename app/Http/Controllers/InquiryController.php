@@ -48,7 +48,7 @@ class InquiryController extends Controller
      */
     public function index()
     {
-        $inquiries = Inquiry::with('user')->where('status','2')->get();
+        $inquiries = Inquiry::with('user')->where('status','2')->orderBy('id', 'desc')->get();
         return response()->json($inquiries);
     }
 
@@ -149,6 +149,7 @@ class InquiryController extends Controller
     {
         $approved_offers = Inquiry::with(['offers','user']) 
             ->where('status', 1)
+            ->orderBy('id', 'desc')
             ->where('offers_status',2)
             ->get()
             ->map(function ($inquiry) {
@@ -184,6 +185,7 @@ class InquiryController extends Controller
         $blockedNumbers = DB::table('blocked_inquiries')->pluck('mobile_number')->toArray();
         $cancelled_offers = Inquiry::with('user')
             ->where('status', 0)
+            ->orderBy('id', 'desc')
             ->whereNotIn('mobile_number', $blockedNumbers)
             ->get();
     
@@ -291,6 +293,7 @@ class InquiryController extends Controller
             'third_response' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
+            'select_user' => 'nullable|string'
         ]);
 
         if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedOrder::where('mobile_number', $request->mobile_number)->exists() ) {
@@ -335,6 +338,7 @@ class InquiryController extends Controller
             'second_response' => $validated['second_response'],
             'third_contact_date' => $third_contact_date,
             'third_response' => $validated['third_response'],
+            'select_user' => $validated['select_user'],
             'notes' => $validated['notes'],
             'user_id' => $validated['user_id'],
         ]);
@@ -502,6 +506,7 @@ class InquiryController extends Controller
             'second_response' => 'nullable|string',
             'third_contact_date' => 'nullable|date',
             'third_response' => 'nullable|string',
+            'select_user' => 'nullable|string',
             'notes' => 'nullable|string',
             'user_id' => 'sometimes|exists:users,id',
             'status' => 'nullable|integer',
@@ -577,6 +582,7 @@ class InquiryController extends Controller
         $inquiry->second_response = $validated['second_response'];
         $inquiry->third_contact_date = $third_contact_date;
         $inquiry->third_response = $validated['third_response'];
+        $inquiry->select_user = $validated['select_user'];
         $inquiry->notes = $validated['notes'];
         $inquiry->status = $validated['status'];
         $inquiry->offers_status = $request->has('offers_status') ? $validated['offers_status'] : 2;
@@ -674,6 +680,7 @@ class InquiryController extends Controller
         $offer_domestic_cancellations = Inquiry::with(['user','offers'])
             ->where('status', 1)
             ->where('offers_status', 0)
+            ->orderBy('id', 'desc')
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_domestic_offers');
             })
@@ -696,6 +703,7 @@ class InquiryController extends Controller
             ->where('status', 1)
             ->where('offers_status', 1)
             ->where('orders_status', 0)
+            ->orderBy('id', 'desc')
             ->whereNotIn('mobile_number', function ($subquery) {
                 $subquery->select('mobile_number')->from('blocked_orders');
             })

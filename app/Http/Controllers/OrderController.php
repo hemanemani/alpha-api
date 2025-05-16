@@ -22,6 +22,7 @@ class OrderController extends Controller
                 'user'
             ])
             ->where('status', 2)
+            ->orderBy('id', 'desc')
             ->where(function($query) {
                 $query->whereHas('sellers')
                     ->orWhereHas('offer.inquiry', function ($subQuery) {

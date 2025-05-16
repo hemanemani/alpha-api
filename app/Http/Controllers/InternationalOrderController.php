@@ -22,6 +22,7 @@ class InternationalOrderController extends Controller
             'user'
         ])
         ->where('status', 2)
+        ->orderBy('id', 'desc')
         ->where(function($query) {
             $query->whereHas('international_sellers')
                   ->orWhereHas('international_offer.international_inquiry', function ($subQuery) {
