@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('inquiries', function (Blueprint $table) {
-            $table->string('select_user')->nullable();
+        Schema::create('audiences', function (Blueprint $table) {
+            $table->id();
+            $table->string('label');
+            $table->string('value')->unique();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('inquiries', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('audiences');
     }
 };

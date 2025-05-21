@@ -17,12 +17,6 @@ class Order extends Model
         'name',
         'mobile_number',
         'seller_assigned',
-        'quantity',
-        'seller_offer_rate',
-        'gst',
-        'buyer_offer_rate',
-        'final_shipping_value',
-        'total_amount', 
         'buyer_gst_number',
         'buyer_pan',
         'buyer_bank_details',
@@ -34,9 +28,16 @@ class Order extends Model
         'logistics_agency',
         'shipping_estimate_value',
         'buyer_final_shipping_value',
+        'buyer_total_amount',
         'status',
-        'user_id'
+        'user_id',
+        'sellerdetails'
     ];
+
+    protected $casts = [
+    'sellerdetails' => 'array',
+    ];
+
 
     public function user()
     {

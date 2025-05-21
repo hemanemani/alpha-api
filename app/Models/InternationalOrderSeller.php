@@ -30,6 +30,7 @@ class InternationalOrderSeller extends Model
         'invoice_generate_date',
         'invoice_value',
         'invoice_number',
+        'delivery_address',
         'order_ready_date',
         'order_delivery_date',
         'order_dispatch_date',
@@ -48,7 +49,11 @@ class InternationalOrderSeller extends Model
         'total_kg',
         'hsn',
         'invoicing_amount',
-        'expenses'
+        'expenses',
+        'products'
+    ];
+    protected $casts = [
+    'products' => 'array',
     ];
     public function international_order()
     {

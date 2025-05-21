@@ -28,4 +28,8 @@ class Ad extends Model
         'duration',
         'post_type'
     ];
+    protected $casts = [
+    'audience' => 'array',
+    ];
+
 }

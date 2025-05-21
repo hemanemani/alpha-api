@@ -784,6 +784,11 @@ class InternationalInquiryController extends Controller
             } elseif ($request->status === 1 && $request->offers_status === 1 && $request->orders_status === 0) {
                 $responseMessage = 'International Inquiry moved to Orders Cancellations.';
             } elseif ($request->status === 1 && $request->offers_status === 1) {
+                $international_offer = \App\Models\InternationalOffer::firstOrNew(['international_inquiry_id' => $international_inquiry->id]);
+                if($international_offer){
+                    $international_offer->status = 1;
+                    $international_offer->save();
+                } 
                 // Move to orders
                 $lastOrderNumber = \App\Models\InternationalOrder::max('order_number');
                 if ($lastOrderNumber === null || $lastOrderNumber < 56564) {

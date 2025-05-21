@@ -33,8 +33,14 @@ class InternationalOrder extends Model
         'logistics_agency',
         'shipping_estimate_value',
         'buyer_final_shipping_value',
+        'buyer_total_amount',
         'status',
-        'user_id'
+        'user_id',
+        'sellerdetails'
+    ];
+
+     protected $casts = [
+    'sellerdetails' => 'array',
     ];
 
     public function international_sellers() {

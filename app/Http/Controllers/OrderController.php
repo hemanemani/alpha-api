@@ -10,6 +10,7 @@ use App\Models\OrderSeller;
 use Illuminate\Support\Facades\Log;
 use App\Rules\UniqueMobileAcrossTables;
 use Spatie\Browsershot\Browsershot;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class OrderController extends Controller
@@ -48,6 +49,19 @@ class OrderController extends Controller
             return response()->json(['error' => 'Order not found'], 404);
         }
 
+        if ($order && is_string($order->sellerdetails)) {
+            $order->sellerdetails = json_decode($order->sellerdetails, true);
+        }
+
+        foreach ($order->sellers as $seller) {
+        if (is_string($seller->products)) {
+            $seller->products = json_decode($seller->products, true);
+            Log::info($seller->products);
+        }
+        }
+
+
+
 
         return response()->json([
             'order' => $order,
@@ -65,12 +79,6 @@ class OrderController extends Controller
             'name' => 'nullable|string|max:255',
             'mobile_number' => 'string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
-            'quantity' => 'nullable|numeric',
-            'seller_offer_rate' => 'nullable|numeric',
-            'gst' => 'nullable|string|max:50',
-            'buyer_offer_rate' => 'nullable|numeric',
-            'final_shipping_value' => 'nullable|numeric',
-            'total_amount' => 'nullable|numeric',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -82,7 +90,17 @@ class OrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
+            'sellerdetails' => 'array|required',
+            'sellerdetails.*.seller_name' => 'required|string',
+            'sellerdetails.*.quantity' => 'required|string',
+            'sellerdetails.*.seller_offer_rate' => 'required|numeric',
+            'sellerdetails.*.gst' => 'required|string',
+            'sellerdetails.*.buyer_offer_rate' => 'required|numeric',
+            'sellerdetails.*.final_shipping_value' => 'required|string',
+            'sellerdetails.*.total_amount' => 'required|numeric',
+
 
     
             // Sellers array validation
@@ -105,6 +123,7 @@ class OrderController extends Controller
             'sellers.*.invoice_generate_date' => 'nullable|date',
             'sellers.*.invoice_value' => 'nullable|numeric',
             'sellers.*.invoice_number' => 'nullable|string|max:100',
+            'sellers.*.delivery_address' => 'nullable|string|max:100',
             'sellers.*.order_ready_date' => 'nullable|date',
             'sellers.*.order_delivery_date' => 'nullable|date',
             'sellers.*.order_dispatch_date' => 'nullable|date',
@@ -119,22 +138,31 @@ class OrderController extends Controller
             'sellers.*.packaging_expenses' => 'nullable|numeric',
             'sellers.*.invoicing_total_amount' => 'nullable|numeric',
             'sellers.*.total_amount_in_words' => 'nullable|string',
-            'sellers.*.product_name' => 'nullable|string',
-            'sellers.*.rate_per_kg' => 'nullable|numeric',
-            'sellers.*.total_kg' => 'nullable|numeric',
-            'sellers.*.hsn' => 'nullable|string',
             'sellers.*.invoicing_amount' => 'nullable|numeric',
             'sellers.*.expenses' => 'nullable|numeric',
+
+            // seller products
+
+            'sellers.*.products' => 'required|array|min:1',
+            'sellers.products.*.product_name' => 'nullable|string',
+            'sellers.products.*.hsn' => 'nullable|string',
+            'sellers.products.*.rate_per_kg' => 'nullable|string',
+            'sellers.products.*.total_kg' => 'nullable|string',
+            'sellers.products.*.product_total_amount' => 'nullable|numeric',
         ]);
     
         $orderData = collect($validatedData)->except('sellers')->toArray();
+        $orderData['sellerdetails'] = json_encode($validatedData['sellerdetails']);
+
         
         $order = Order::create($orderData);
     
         OrderSeller::where('order_id', $order->id)->delete();
     
         foreach ($validatedData['sellers'] as $sellerData) {
+            $products = $sellerData['products'] ?? [];
             $sellerData['order_id'] = $order->id;
+            $sellerData['products'] = json_encode($products);
             OrderSeller::create($sellerData);
         }
     
@@ -152,14 +180,8 @@ class OrderController extends Controller
             'offer_id'  => 'nullable|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
-            'mobile_number' => 'nullable|string|max:20',
+            'mobile_number' => 'string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
-            'quantity' => 'nullable|numeric',
-            'seller_offer_rate' => 'nullable|numeric',
-            'gst' => 'nullable|string|max:50',
-            'buyer_offer_rate' => 'nullable|numeric',
-            'final_shipping_value' => 'nullable|numeric',
-            'total_amount' => 'nullable|numeric',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -171,7 +193,16 @@ class OrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
+            'sellerdetails' => 'array|required',
+            'sellerdetails.*.seller_name' => 'required|string',
+            'sellerdetails.*.quantity' => 'required|string',
+            'sellerdetails.*.seller_offer_rate' => 'required|numeric',
+            'sellerdetails.*.gst' => 'required|string',
+            'sellerdetails.*.buyer_offer_rate' => 'required|numeric',
+            'sellerdetails.*.final_shipping_value' => 'required|string',
+            'sellerdetails.*.total_amount' => 'required|numeric',
 
     
             // Sellers array validation
@@ -194,6 +225,7 @@ class OrderController extends Controller
             'sellers.*.invoice_generate_date' => 'nullable|date',
             'sellers.*.invoice_value' => 'nullable|numeric',
             'sellers.*.invoice_number' => 'nullable|string|max:100',
+            'sellers.*.delivery_address' => 'nullable|string|max:100',
             'sellers.*.order_ready_date' => 'nullable|date',
             'sellers.*.order_delivery_date' => 'nullable|date',
             'sellers.*.order_dispatch_date' => 'nullable|date',
@@ -208,12 +240,17 @@ class OrderController extends Controller
             'sellers.*.packaging_expenses' => 'nullable|numeric',
             'sellers.*.invoicing_total_amount' => 'nullable|numeric',
             'sellers.*.total_amount_in_words' => 'nullable|string',
-            'sellers.*.product_name' => 'nullable|string',
-            'sellers.*.rate_per_kg' => 'nullable|numeric',
-            'sellers.*.total_kg' => 'nullable|numeric',
-            'sellers.*.hsn' => 'nullable|string',
             'sellers.*.invoicing_amount' => 'nullable|numeric',
             'sellers.*.expenses' => 'nullable|numeric',
+
+            // seller products
+
+            'sellers.*.products' => 'required|array|min:1',
+            'sellers.products.*.product_name' => 'nullable|string',
+            'sellers.products.*.hsn' => 'nullable|string',
+            'sellers.products.*.rate_per_kg' => 'nullable|string',
+            'sellers.products.*.total_kg' => 'nullable|string',
+            'sellers.products.*.product_total_amount' => 'nullable|numeric',
         ]);
 
         if ($request->has('offer_id') && $request->offer_id) {
@@ -234,6 +271,7 @@ class OrderController extends Controller
         if ($orderIsDirty) {
 
             $orderData = collect($validatedData)->except('sellers')->toArray();
+            $orderData['sellerdetails'] = json_encode($validatedData['sellerdetails']);
             $order->update($orderData);
 
         } 
@@ -242,6 +280,7 @@ class OrderController extends Controller
     
         foreach ($request->input('sellers') as $sellerData) {
             $sellerData['order_id'] = $order->id;
+            $sellerData['products'] = json_encode($products);
             OrderSeller::create($sellerData);
         }
         
@@ -258,19 +297,15 @@ class OrderController extends Controller
     public function generatePDF(Request $request)
     {
         $data = $request->all();
-        $html = view('pdf.invoice', ['data' => $data])->render();
+
         $filename = "invoice_{$data['invoicing_invoice_number']}.pdf";
-    
-        $pdfContent = Browsershot::html($html)
-            ->addChromiumArguments(['--no-sandbox'])
-            ->format('A4')
-            ->showBackground()
-            ->pdf();
-    
-        return response($pdfContent, 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+
+        $pdf = Pdf::loadView('pdf.invoice', ['data' => $data])
+                ->setPaper('A4', 'portrait');
+
+        return $pdf->download($filename);
     }
+
 
     public function getNextOrderNumber()
     {

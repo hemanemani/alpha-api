@@ -23,6 +23,7 @@ class Offer extends Model
         'offer_notes',
         'sample_send_address',
         'inquiry_id',
+        'status'
     ];
 
     public function inquiry()

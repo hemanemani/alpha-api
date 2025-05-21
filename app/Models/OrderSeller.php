@@ -30,6 +30,7 @@ class OrderSeller extends Model
         'invoice_generate_date',
         'invoice_value',
         'invoice_number',
+        'delivery_address',
         'order_ready_date',
         'order_delivery_date',
         'order_dispatch_date',
@@ -47,9 +48,15 @@ class OrderSeller extends Model
         'rate_per_kg',
         'total_kg',
         'hsn',
+        'product_total_amount',
         'invoicing_amount',
-        'expenses'
+        'expenses',
+        'products'
     ];
+    protected $casts = [
+    'products' => 'array',
+    ];
+
     public function order()
     {
         return $this->belongsTo(Order::class);

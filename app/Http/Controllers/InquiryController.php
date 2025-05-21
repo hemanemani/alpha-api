@@ -796,6 +796,11 @@ class InquiryController extends Controller
             } elseif ($request->status == 1 && $request->offers_status === 1 && $request->orders_status ===0) {
                 $responseMessage = 'Inquiry moved to Orders Cancellations.';
             } elseif ($request->status == 1 && $request->offers_status === 1) {
+                $offer = \App\Models\Offer::firstOrNew(['inquiry_id' => $inquiry->id]);
+                if($offer){
+                    $offer->status = 1;
+                    $offer->save();
+                }   
                 $lastOrderNumber = \App\Models\Order::max('order_number');
                 if ($lastOrderNumber === null || $lastOrderNumber < 56564) {
                     $lastOrderNumber = 56564;
@@ -1038,7 +1043,7 @@ class InquiryController extends Controller
      */
     /**
      * @OA\Delete(
-     *     path="/api/inquries/{id}",
+     *     path="/api/inquiries/{id}",
      *     summary="Delete a inquiry",
      *     tags={"Inquiries"},
      *     @OA\Parameter(

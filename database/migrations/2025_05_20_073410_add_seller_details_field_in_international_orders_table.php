@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('inquiries', function (Blueprint $table) {
-            $table->string('select_user')->nullable();
+        Schema::table('international_orders', function (Blueprint $table) {
+            $table->json('sellerdetails')->nullable();
         });
     }
 
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('inquiries', function (Blueprint $table) {
+        Schema::table('international_orders', function (Blueprint $table) {
             //
         });
     }

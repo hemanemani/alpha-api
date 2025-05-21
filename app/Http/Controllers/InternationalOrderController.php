@@ -10,6 +10,7 @@ use App\Models\InternationalOrderSeller;
 use Illuminate\Support\Facades\Log;
 use App\Rules\UniqueMobileAcrossTables;
 use Spatie\Browsershot\Browsershot;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class InternationalOrderController extends Controller
@@ -53,6 +54,16 @@ class InternationalOrderController extends Controller
             return response()->json(['error' => 'International Order not found'], 404);
         }
 
+         if ($international_order && is_string($international_order->sellerdetails)) {
+            $international_order->sellerdetails = json_decode($international_order->sellerdetails, true);
+        }
+
+        foreach ($international_order->international_sellers as $international_seller) {
+        if (is_string($international_seller->products)) {
+            $international_seller->products = json_decode($international_seller->products, true);
+        }
+        }
+
 
         return response()->json([
             'international_order' => $international_order,
@@ -69,12 +80,6 @@ class InternationalOrderController extends Controller
             'name' => 'nullable|string|max:255',
             'mobile_number' => 'nullable|string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
-            'quantity' => 'nullable|numeric',
-            'seller_offer_rate' => 'nullable|numeric',
-            'gst' => 'nullable|string|max:50',
-            'buyer_offer_rate' => 'nullable|numeric',
-            'final_shipping_value' => 'nullable|numeric',
-            'total_amount' => 'nullable|numeric',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -86,7 +91,16 @@ class InternationalOrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
+            'sellerdetails' => 'array|required',
+            'sellerdetails.*.seller_name' => 'required|string',
+            'sellerdetails.*.quantity' => 'required|string',
+            'sellerdetails.*.seller_offer_rate' => 'required|numeric',
+            'sellerdetails.*.gst' => 'required|string',
+            'sellerdetails.*.buyer_offer_rate' => 'required|numeric',
+            'sellerdetails.*.final_shipping_value' => 'required|string',
+            'sellerdetails.*.total_amount' => 'required|numeric',
 
     
             // Sellers array validation
@@ -109,6 +123,7 @@ class InternationalOrderController extends Controller
             'international_sellers.*.invoice_generate_date' => 'nullable|date',
             'international_sellers.*.invoice_value' => 'nullable|numeric',
             'international_sellers.*.invoice_number' => 'nullable|string|max:100',
+            'international_sellers.*.delivery_address' => 'nullable|string|max:100',
             'international_sellers.*.order_ready_date' => 'nullable|date',
             'international_sellers.*.order_delivery_date' => 'nullable|date',
             'international_sellers.*.order_dispatch_date' => 'nullable|date',
@@ -122,21 +137,29 @@ class InternationalOrderController extends Controller
             'international_sellers.*.packaging_expenses' => 'nullable|numeric',
             'international_sellers.*.invoicing_total_amount' => 'nullable|numeric',
             'international_sellers.*.total_amount_in_words' => 'nullable|string',
-            'international_sellers.*.product_name' => 'nullable|string',
-            'international_sellers.*.rate_per_kg' => 'nullable|numeric',
-            'international_sellers.*.total_kg' => 'nullable|numeric',
-            'international_sellers.*.hsn' => 'nullable|string',
             'international_sellers.*.invoicing_amount' => 'nullable|numeric',
             'international_sellers.*.expenses' => 'nullable|numeric',
+
+            // seller products
+            'international_sellers.*.products' => 'required|array|min:1',
+            'international_sellers.products.*.product_name' => 'nullable|string',
+            'international_sellers.products.*.hsn' => 'nullable|string',
+            'international_sellers.products.*.rate_per_kg' => 'nullable|string',
+            'international_sellers.products.*.total_kg' => 'nullable|string',
+            'international_sellers.products.*.product_total_amount' => 'nullable|numeric',
         ]);
     
         $orderData = collect($validatedData)->except('international_sellers')->toArray();
+        $orderData['sellerdetails'] = json_encode($validatedData['sellerdetails']);
+
         $order = InternationalOrder::create($orderData);
     
         InternationalOrderSeller::where('international_order_id', $order->id)->delete();
     
         foreach ($validatedData['international_sellers'] as $sellerData) {
+            $products = $sellerData['products'] ?? [];
             $sellerData['international_order_id'] = $order->id;
+            $sellerData['products'] = json_encode($products);
             InternationalOrderSeller::create($sellerData);
         }
     
@@ -156,12 +179,6 @@ class InternationalOrderController extends Controller
             'name' => 'nullable|string|max:255',
             'mobile_number' => 'nullable|string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
-            'quantity' => 'nullable|numeric',
-            'seller_offer_rate' => 'nullable|numeric',
-            'gst' => 'nullable|string|max:50',
-            'buyer_offer_rate' => 'nullable|numeric',
-            'final_shipping_value' => 'nullable|numeric',
-            'total_amount' => 'nullable|numeric',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -173,7 +190,16 @@ class InternationalOrderController extends Controller
             'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
+            'sellerdetails' => 'array|required',
+            'sellerdetails.*.seller_name' => 'required|string',
+            'sellerdetails.*.quantity' => 'required|string',
+            'sellerdetails.*.seller_offer_rate' => 'required|numeric',
+            'sellerdetails.*.gst' => 'required|string',
+            'sellerdetails.*.buyer_offer_rate' => 'required|numeric',
+            'sellerdetails.*.final_shipping_value' => 'required|string',
+            'sellerdetails.*.total_amount' => 'required|numeric',
     
             // Sellers array validation
             'international_sellers' => 'required|array|min:1',
@@ -195,6 +221,7 @@ class InternationalOrderController extends Controller
             'international_sellers.*.invoice_generate_date' => 'nullable|date',
             'international_sellers.*.invoice_value' => 'nullable|numeric',
             'international_sellers.*.invoice_number' => 'nullable|string|max:100',
+            'international_sellers.*.delivery_address' => 'nullable|string|max:100',
             'international_sellers.*.order_ready_date' => 'nullable|date',
             'international_sellers.*.order_delivery_date' => 'nullable|date',
             'international_sellers.*.order_dispatch_date' => 'nullable|date',
@@ -208,12 +235,17 @@ class InternationalOrderController extends Controller
             'international_sellers.*.packaging_expenses' => 'nullable|numeric',
             'international_sellers.*.invoicing_total_amount' => 'nullable|numeric',
             'international_sellers.*.total_amount_in_words' => 'nullable|string',
-            'international_sellers.*.product_name' => 'nullable|string',
-            'international_sellers.*.rate_per_kg' => 'nullable|numeric',
-            'international_sellers.*.total_kg' => 'nullable|numeric',
-            'international_sellers.*.hsn' => 'nullable|string',
             'international_sellers.*.invoicing_amount' => 'nullable|numeric',
             'international_sellers.*.expenses' => 'nullable|numeric',
+
+            // seller products
+
+            'international_sellers.*.products' => 'required|array|min:1',
+            'international_sellers.products.*.product_name' => 'nullable|string',
+            'international_sellers.products.*.hsn' => 'nullable|string',
+            'international_sellers.products.*.rate_per_kg' => 'nullable|string',
+            'international_sellers.products.*.total_kg' => 'nullable|string',
+            'international_sellers.products.*.product_total_amount' => 'nullable|numeric',
         ]);
 
         if ($request->has('international_offer_id') && $request->international_offer_id) {

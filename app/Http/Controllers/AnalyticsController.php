@@ -482,8 +482,7 @@ class AnalyticsController extends Controller
 
         /******************************* Fetch all products strings from inquiries ***********************************/
 
-        $inquiriesWithThirdContact = Inquiry::whereNotNull('third_contact_date')
-        ->pluck('specific_product');
+        $inquiriesWithThirdContact = Inquiry::whereNotNull('specific_product')->pluck('specific_product');
 
         //Count how many times each product appears
         $productCounts = [];
@@ -497,7 +496,6 @@ class AnalyticsController extends Controller
         }
         
         arsort($productCounts);
-
         $top5SpecificProductsWithCounts = [];
         foreach (array_slice($productCounts, 0, 5, true) as $product => $count) {
             $top5SpecificProductsWithCounts[] = [
@@ -536,9 +534,8 @@ class AnalyticsController extends Controller
 
         /******************************* Fetch all offers ***********************************/
 
-        $totalDomesticOffers = Inquiry::where('status', 1)->count();
-        $totalInternationalOffers = InternationInquiry::where('status',1)->count();
-
+        $totalDomesticOffers = Inquiry::where('status', 1)->where('offers_status',2)->count();
+        $totalInternationalOffers = InternationInquiry::where('status',1)->where('offers_status',2)->count();
 
         $totalSampleDispatchedOffers = Offer::whereNotNull('sample_dispatched_date')
         ->whereNotNull('sample_sent_through')
@@ -560,11 +557,11 @@ class AnalyticsController extends Controller
         ->where('sample_sent_through', '!=', '')
         ->count();
 
-        $totalSampleDispatchedPendingOffers = Offer::whereNotNull('sample_dispatched_date')->count();
-        $totalSampleDispatchedPendingInternationalOffers = InternationalOffer::whereNotNull('sample_dispatched_date')->count();
+        $totalSampleDispatchedPendingOffers = Offer::whereNull('sample_dispatched_date')->where('status',1)->count();
+        $totalSampleDispatchedPendingInternationalOffers = InternationalOffer::whereNull('sample_dispatched_date')->where('status',1)->count();
 
-        $averageSampleAmountReceivedOffers = Offer::whereNotNull("received_sample_amount")->count();
-        $averageSampleAmountReceivedInternationalOffers = InternationalOffer::whereNotNull("received_sample_amount")->count();
+        $averageSampleAmountReceivedOffers = Offer::whereNotNull("received_sample_amount")->sum("received_sample_amount");
+        $averageSampleAmountReceivedInternationalOffers = InternationalOffer::whereNotNull("received_sample_amount")->sum("received_sample_amount");
 
 
         //average difference between offer date and third sample dispatch date
@@ -879,12 +876,18 @@ class AnalyticsController extends Controller
         ->limit(5)
         ->get();
 
-        $topProducts = OrderSeller::whereNotNull('product_name')
-        ->select('product_name', DB::raw('COUNT(*) as product_count'))
-        ->groupBy('product_name')  
-        ->orderByDesc('product_count') 
+        $topProducts = DB::table('order_sellers')
+        ->select(
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(products, '$[0].product_name')) as product_name"),
+            DB::raw('COUNT(*) as product_count')
+        )
+        ->whereRaw("JSON_EXTRACT(products, '$[0].product_name') IS NOT NULL")
+        ->groupBy(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(products, '$[0].product_name'))"))
+        ->orderByDesc('product_count')
         ->limit(10)
         ->get();
+
+
         
         $topPayments = Order::whereNotNull('name')
         ->whereNotNull('amount_received')

@@ -18,6 +18,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InternationalOrderController;
 use App\Http\Controllers\AdController;
+use App\Http\Controllers\AudienceController;
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
@@ -129,6 +130,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::resource('ads', AdController::class);
     Route::get('/international-ads',[AdController::class,'international_index']);
+
+
+    Route::get('/audiences', [AudienceController::class, 'index']);
+    Route::post('/audiences', [AudienceController::class, 'store']);
+    Route::delete('/audiences/{id}', [AudienceController::class, 'destroy']);
+
 
 });
 

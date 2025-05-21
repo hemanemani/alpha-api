@@ -22,6 +22,8 @@ class InternationalOffer extends Model
         'sample_received_date',
         'offer_notes',
         'international_inquiry_id',
+                'status'
+
     ];
 
     public function international_inquiry()

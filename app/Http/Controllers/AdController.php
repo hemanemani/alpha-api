@@ -49,8 +49,13 @@ class AdController extends Controller
 
         ]);
 
+        $data['date_published'] = $request->date_published 
+            ? \Carbon\Carbon::createFromFormat('d-m-Y', $request->date_published)->format('Y-m-d') 
+            : null;
+
         if ($data['type'] === 'domestic') {
             $ad = Ad::create($data);
+
         } else {
             $ad = InternationalAd::create($data);
         }
