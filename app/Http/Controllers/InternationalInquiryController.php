@@ -489,7 +489,7 @@ class InternationalInquiryController extends Controller
 
         $validated = $request->validate([
             'inquiry_number' => 'sometimes|integer',
-            'mobile_number' => 'sometimes|string',
+            'mobile_number' => ['required', 'string', new UniqueMobileAcrossTables($international_inquiry->id)],
             'inquiry_date' => 'sometimes|date',
             'product_categories' => 'nullable|string',
             'specific_product' => 'nullable|string',
@@ -527,7 +527,9 @@ class InternationalInquiryController extends Controller
 
         ]);
 
-     
+        if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOrder::where('mobile_number', $request->mobile_number)->exists() ) {
+            return response()->json(['message' => 'This inquiry is blocked.'], 403);
+        }
 
         $inquiry_date = $this->parseDate($request->inquiry_date);
         $first_contact_date = $this->parseDate($request->first_contact_date);

@@ -267,6 +267,7 @@ class InternationalOrderController extends Controller
             
         if ($orderIsDirty) {
             $orderData = collect($validatedData)->except('international_sellers')->toArray();
+            $orderData['sellerdetails'] = json_encode($validatedData['sellerdetails']);
             $international_order->update($orderData);
         } 
     
@@ -274,7 +275,9 @@ class InternationalOrderController extends Controller
         InternationalOrderSeller::where('international_order_id', $international_order->id)->delete();
     
         foreach ($request->input('international_sellers') as $sellerData) {
-            $sellerData['international_order_id'] = $international_order->id;    
+            $products = $sellerData['products'] ?? [];
+            $sellerData['international_order_id'] = $international_order->id; 
+            $sellerData['products'] = json_encode($products);   
             InternationalOrderSeller::create($sellerData);
         }
         

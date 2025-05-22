@@ -492,7 +492,7 @@ class InquiryController extends Controller
 
         $validated = $request->validate([
             'inquiry_number' => 'sometimes|integer',
-            'mobile_number' => 'sometimes|string',
+            'mobile_number' => ['required', 'string', new UniqueMobileAcrossTables($inquiry->id)],
             'inquiry_date' => 'sometimes|date',
             'product_categories' => 'nullable|string',
             'specific_product' => 'nullable|string',
@@ -526,6 +526,9 @@ class InquiryController extends Controller
             'sample_send_address' => 'sometimes|string'
         ]);
 
+        if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedOrder::where('mobile_number', $request->mobile_number)->exists() ) {
+            return response()->json(['message' => 'This inquiry is blocked.'], 403);
+        }
       
         $inquiry_date = !empty($request->inquiry_date) && strtotime($request->inquiry_date)
         ? \Carbon\Carbon::parse($request->inquiry_date)->format('Y-m-d') 

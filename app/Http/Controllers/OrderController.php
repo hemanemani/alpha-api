@@ -180,7 +180,7 @@ class OrderController extends Controller
             'offer_id'  => 'nullable|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
-            'mobile_number' => 'string|max:20',
+            'mobile_number' => 'nullable|string|max:20',
             'seller_assigned' => 'nullable|string|max:255',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
@@ -279,6 +279,7 @@ class OrderController extends Controller
         OrderSeller::where('order_id', $order->id)->delete();
     
         foreach ($request->input('sellers') as $sellerData) {
+            $products = $sellerData['products'] ?? [];
             $sellerData['order_id'] = $order->id;
             $sellerData['products'] = json_encode($products);
             OrderSeller::create($sellerData);

@@ -511,7 +511,7 @@ class AnalyticsController extends Controller
 
         //Count how many times each product appeainternationalPs
         $internationalProductCounts = [];
-        foreach ($inquiriesWithThirdContact as $productString) {
+        foreach ($internationalInquiriesWithThirdContact as $productString) {
             $products = array_map('trim', explode(',', $productString));
             foreach ($products as $product) {
                 if ($product !== '') {
@@ -538,43 +538,43 @@ class AnalyticsController extends Controller
         $totalInternationalOffers = InternationInquiry::where('status',1)->where('offers_status',2)->count();
 
         $totalSampleDispatchedOffers = Offer::whereNotNull('sample_dispatched_date')
-        ->whereNotNull('sample_sent_through')
-        ->where('sample_sent_through', '!=', '')
+        ->whereNotNull('sample_send_address')
+        ->where('sample_send_address', '!=', '')
         ->count();
 
         $totalSampleDispatchedInternationalOffers = InternationalOffer::whereNotNull('sample_dispatched_date')
-        ->whereNotNull('sample_sent_through')
-        ->where('sample_sent_through', '!=', '')
+        ->whereNotNull('sample_send_address')
+        ->where('sample_send_address', '!=', '')
         ->count();
 
         $totalSampleDeliveredOffers = Offer::whereNotNull('sample_received_date')
-        ->whereNotNull('sample_sent_through')
-        ->where('sample_sent_through', '!=', '')
+        ->whereNotNull('sample_send_address')
+        ->where('sample_send_address', '!=', '')
         ->count();
 
         $totalSampleDeliveredInternationalOffers = InternationalOffer::whereNotNull('sample_received_date')
-        ->whereNotNull('sample_sent_through')
-        ->where('sample_sent_through', '!=', '')
+        ->whereNotNull('sample_send_address')
+        ->where('sample_send_address', '!=', '')
         ->count();
 
         $totalSampleDispatchedPendingOffers = Offer::whereNull('sample_dispatched_date')->where('status',1)->count();
         $totalSampleDispatchedPendingInternationalOffers = InternationalOffer::whereNull('sample_dispatched_date')->where('status',1)->count();
 
-        $averageSampleAmountReceivedOffers = Offer::whereNotNull("received_sample_amount")->sum("received_sample_amount");
-        $averageSampleAmountReceivedInternationalOffers = InternationalOffer::whereNotNull("received_sample_amount")->sum("received_sample_amount");
+        $averageSampleAmountReceivedOffers = Offer::whereNotNull("received_sample_amount")->avg("received_sample_amount");
+        $averageSampleAmountReceivedInternationalOffers = InternationalOffer::whereNotNull("received_sample_amount")->avg("received_sample_amount");
 
 
         //average difference between offer date and third sample dispatch date
 
 
-        $differenctOfOfferAndSampleDispatchDate = Offer::whereNotNull('sample_dispatched_date')->get();
+        $differenctOfOfferAndSampleDispatchDate = Offer::whereNotNull('offer_date')->get();
         $totalOSDDDays = 0;
         $OSDDcount = 0;
         
             foreach ($differenctOfOfferAndSampleDispatchDate as $offer) {
                 $offerDate = Carbon::parse($offer->offer_date);
                 $offerSampleDispatchDate = Carbon::parse($offer->sample_dispatched_date);
-                $OFCDdiff = $offerDate->diffInDays($offerSampleDispatchDate);
+                $OFCDdiff = $offerSampleDispatchDate->diffInDays($offerDate);
                 
                 $totalOSDDDays += $OFCDdiff;
                 $OSDDcount++;
@@ -687,7 +687,7 @@ class AnalyticsController extends Controller
             $products = array_map('trim', explode(',', $productString));
             foreach ($products as $product) {
                 if ($product !== '') {
-                    $productCounts[$product] = ($productCounts[$product] ?? 0) + 1;
+                    $offerProductCounts[$product] = ($offerProductCounts[$product] ?? 0) + 1;
                 }
             }
         }
@@ -696,25 +696,17 @@ class AnalyticsController extends Controller
 
         $top5OffersSpecificProductsWithCounts = [];
         foreach (array_slice($offerProductCounts, 0, 5, true) as $product => $count) {
-            $top5SpecificProductsWithCounts[] = [
+            $top5OffersSpecificProductsWithCounts[] = [
                 'product' => $product,
                 'count' => $count,
             ];
         }
 
 
-        $deliveredSampleOffersCount = Offer::whereHas('inquiry', function ($query) {
-            $query->where('status', 1);
-        })
-        ->whereNotNull('sample_received_date')
-        ->count();
+        $deliveredSampleOffersCount = Offer::where('status', 2)->whereNotNull('sample_received_date')->count();
 
 
-        $deliveredSampleInternationalOffersCount = InternationalOffer::whereHas('international_inquiry', function ($query) {
-            $query->where('status', 1);
-        })
-        ->whereNotNull('sample_received_date')
-        ->count();
+        $deliveredSampleInternationalOffersCount = InternationalOffer::where('status', 2)->whereNotNull('sample_received_date')->count();
 
 
 
