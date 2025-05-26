@@ -19,6 +19,14 @@ class UniqueMobileAcrossTables implements Rule
 
     public function passes($attribute, $value): bool
     {
+
+        $isBlocked = DB::table('blocked_inquiries')->where('mobile_number', $value)->exists() || DB::table('blocked_domestic_offers')->where('mobile_number', $value)->exists() || DB::table('blocked_orders')->where('mobile_number', $value)->exists() || DB::table('blocked_international_inquiries')->where('mobile_number', $value)->exists() || DB::table('blocked_international_offers')->where('mobile_number', $value)->exists() || DB::table('blocked_international_orders')->where('mobile_number', $value)->exists();
+
+        if ($isBlocked) {
+            $this->conflictSource = 'blocked';
+            return false;
+        }
+
         $tables = [
             'inquiries' => true,
             'orders' => true,
@@ -45,6 +53,7 @@ class UniqueMobileAcrossTables implements Rule
     public function message(): string
     {
         return match ($this->conflictSource) {
+            'blocked' => 'This inquiry is blocked.',
             'inquiries' => 'Mobile number already exists in inquiries.',
             'orders' => 'Mobile number already exists in orders.',
             'international_inquiries' => 'Mobile number already exists in international inquiries.',

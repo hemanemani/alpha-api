@@ -10,21 +10,51 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Validators\Failure;
+use App\Rules\UniqueMobileAcrossTables;
+use App\Models\BlockedInquiry;
+use App\Models\BlockedOffer;
+use App\Models\BlockedOrder;
 
 
 
 class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
 {
     public $errors = [];
+    protected $currentRow = 1;
 
     public function model(array $row)
     {
+        $this->currentRow++;
         static $nextInquiryNumber = null;
 
         if (is_null($nextInquiryNumber)) {
             $nextInquiryNumber = Inquiry::max('inquiry_number') ?? 0;
             $nextInquiryNumber++;
         }
+
+        // Blocked mobile number check
+        if (
+            BlockedInquiry::where('mobile_number', $row['mobile_number'])->exists() ||
+            BlockedOffer::where('mobile_number', $row['mobile_number'])->exists() ||
+            BlockedOrder::where('mobile_number', $row['mobile_number'])->exists()
+        ) {
+            $this->errors[] = [
+                'row'    => $this->currentRow,
+                'errors' => ['This inquiry is blocked.']
+            ];
+            return null;
+        }
+
+        // UniqueMobileAcrossTables validation (manual)
+        $rule = new UniqueMobileAcrossTables;
+        if (!$rule->passes('mobile_number', $row['mobile_number'])) {
+            $this->errors[] = [
+                'row'    => $this->currentRow,
+                'errors' => [$rule->message()]
+            ];
+            return null;
+        }
+
     
 
         $validator = Validator::make($row, [
@@ -45,7 +75,7 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
 
         if ($validator->fails()) {
             $this->errors[] = [
-                'row'    => $row['id'] ?? 'Unknown',
+                'row'    => $this->currentRow,
                 'errors' => $validator->errors()->all()
             ];
             return null;

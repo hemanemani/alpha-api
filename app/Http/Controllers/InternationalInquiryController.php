@@ -296,10 +296,6 @@ class InternationalInquiryController extends Controller
 
         ]);
 
-        if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOrder::where('mobile_number', $request->mobile_number)->exists() ) {
-            return response()->json(['message' => 'This inquiry is blocked.'], 403);
-        }
-
         $request->validate([
             'mobile_number' => ['required', new UniqueMobileAcrossTables],
         ]);
@@ -526,10 +522,6 @@ class InternationalInquiryController extends Controller
 
 
         ]);
-
-        if (BlockedInternationalInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedInternationalOrder::where('mobile_number', $request->mobile_number)->exists() ) {
-            return response()->json(['message' => 'This inquiry is blocked.'], 403);
-        }
 
         $inquiry_date = $this->parseDate($request->inquiry_date);
         $first_contact_date = $this->parseDate($request->first_contact_date);

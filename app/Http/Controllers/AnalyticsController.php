@@ -302,6 +302,9 @@ class AnalyticsController extends Controller
         $totalInquiriesCount = Inquiry::all()->count();
         $totalInternationalCount = InternationInquiry::all()->count();
 
+        $totalOffersCount = Inquiry::all()->where('status',1)->count();
+        $totalInternationalOffersCount = InternationInquiry::all()->where('status',1)->count();
+
         $inquiryThirdContentNullCount = Inquiry::whereNull('third_contact_date')->count();
         $inquiryThirdContentNotNullCount = Inquiry::whereNotNull('third_contact_date')->count();
 
@@ -557,8 +560,8 @@ class AnalyticsController extends Controller
         ->where('sample_send_address', '!=', '')
         ->count();
 
-        $totalSampleDispatchedPendingOffers = Offer::whereNull('sample_dispatched_date')->where('status',1)->count();
-        $totalSampleDispatchedPendingInternationalOffers = InternationalOffer::whereNull('sample_dispatched_date')->where('status',1)->count();
+        $totalSampleDispatchedPendingOffers = Offer::whereNull('sample_dispatched_date')->where('status',2)->count();
+        $totalSampleDispatchedPendingInternationalOffers = InternationalOffer::whereNull('sample_dispatched_date')->where('status',2)->count();
 
         $averageSampleAmountReceivedOffers = Offer::whereNotNull("received_sample_amount")->avg("received_sample_amount");
         $averageSampleAmountReceivedInternationalOffers = InternationalOffer::whereNotNull("received_sample_amount")->avg("received_sample_amount");
@@ -787,7 +790,6 @@ class AnalyticsController extends Controller
         /******************************* Fetch all orders ***********************************/
         $totalDomesticOrders = Order::all()->count();
         $totalInternationalOrders = InternationalOrder::all()->count();
-        $totalOrders = $totalDomesticOrders + $totalInternationalOrders;
 
 
         $totalOrderAmount = Order::all()->whereNotNULL('total_amount')->sum('total_amount');
@@ -926,6 +928,8 @@ class AnalyticsController extends Controller
         return response()->json([
             'totalInquiriesCount' => $totalInquiriesCount,
             'totalInternationalCount' =>$totalInternationalCount,
+            'totalOffersCount' => $totalOffersCount,
+            'totalInternationalOffersCount' => $totalInternationalOffersCount,
             'totalDomestic' => $totalDomestic,
             'totalInternational' => $totalInternational,
             'thisMonthtotalInquiries' => $thisMonthtotalInquiries,
@@ -989,7 +993,8 @@ class AnalyticsController extends Controller
 
             //orders
 
-            'totalOrders' => $totalOrders,
+            'totalDomesticOrders' => $totalDomesticOrders,
+            'totalInternationalOrders' => $totalInternationalOrders,
             'totalOrderAmount' => $totalOrderAmount,
             'totalInternationalOrderAmount' => $totalInternationalOrderAmount,
             'ordersAmountReceived' => $ordersAmountReceived,

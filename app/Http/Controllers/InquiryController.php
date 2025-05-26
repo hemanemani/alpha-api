@@ -296,10 +296,6 @@ class InquiryController extends Controller
             'select_user' => 'nullable|string'
         ]);
 
-        if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedOrder::where('mobile_number', $request->mobile_number)->exists() ) {
-            return response()->json(['message' => 'This inquiry is blocked.'], 403);
-        }
-
 
         $request->validate([
             'mobile_number' => ['required', new UniqueMobileAcrossTables],
@@ -525,10 +521,6 @@ class InquiryController extends Controller
             'offer_notes' => 'sometimes|string',
             'sample_send_address' => 'sometimes|string'
         ]);
-
-        if (BlockedInquiry::where('mobile_number', $request->mobile_number)->exists() || BlockedOffer::where('mobile_number', $request->mobile_number)->exists() || BlockedOrder::where('mobile_number', $request->mobile_number)->exists() ) {
-            return response()->json(['message' => 'This inquiry is blocked.'], 403);
-        }
       
         $inquiry_date = !empty($request->inquiry_date) && strtotime($request->inquiry_date)
         ? \Carbon\Carbon::parse($request->inquiry_date)->format('Y-m-d') 
@@ -821,6 +813,14 @@ class InquiryController extends Controller
                     $responseMessage = 'Inquiry moved to Orders and order number updated.';
                 } else {
                     $responseMessage = 'Offer not found for the inquiry.';
+                }
+            }else {
+            $order = Order::find($id);
+                if ($order) {
+                    $order->status = $request->orders_status ?? $order->status;
+                    $order->save();
+            
+                    $responseMessage = 'Order status updated (without inquiry).';
                 }
             }
 

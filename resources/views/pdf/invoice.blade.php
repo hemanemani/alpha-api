@@ -95,14 +95,23 @@
     <hr class="mt-3">
   </div>
 
+  @php
+    $currentYear = date('Y');
+    $financialYear = $currentYear . '-' . substr($currentYear + 1, -2);
+  @endphp
+
+
   <!-- Title -->
   <h6 class="text-center text-decoration-underline fw-bold mb-4">INVOICE</h6>
 
 
   <table style="width: 100%; margin-bottom: 12px;">
     <tr>
-      <td style="width: 50%;"><strong>Date:</strong> {{ $data['invoicing_invoice_generate_date'] }}</td>
-      <td style="width: 50%; margin-left:150px"><strong>Bill No:</strong> {{ $data['invoicing_invoice_number'] }}</td>
+      
+
+      <td style="width: 50%;"><strong>Date:</strong> {{ \Carbon\Carbon::parse($data['invoicing_invoice_generate_date'])->format('d/m/Y') }}</td>
+      <td style="width: 50%; margin-left:150px"><strong>Bill No:</strong> {{ $data['invoicing_invoice_number'] }} ({{ $financialYear }})
+     </td>
     </tr>
   </table>
 
@@ -125,33 +134,38 @@
     <thead>
       <tr>
         <th class="text-start">Particulars</th>
-        <th>HSN</th>
         <th>Rate per Kg</th>
         <th>Total Kg</th>
         <th class="text-end">Amount</th>
+        <th>HSN</th>
       </tr>
     </thead>
     <tbody>
       @foreach ($products as $product)
         <tr>
           <td class="text-start">{{ $product['product_name'] }}</td>
-          <td>{{ $product['hsn'] }}</td>
           <td>{{ $product['rate_per_kg'] }}</td>
           <td>{{ $product['total_kg'] }}</td>
-          <td class="text-end">{{ $product['product_total_amount'] }}</td>
+          <td class="text-end">{{ number_format($product['product_total_amount'],2) }}</td>
+          <td>{{ $product['hsn'] }}</td>
         </tr>
       @endforeach
       <tr>
         <td class="text-start fw-semibold" colspan="4">Amount</td>
-        <td class="text-end">{{ $data['invoicing_amount'] }}</td>
+        <td class="text-end">{{ number_format($data['invoicing_amount'], 2) }}</td>
       </tr>
       <tr>
-        <td class="text-start" colspan="4">Other Expenses: Packaging Charges</td>
-        <td class="text-end">{{ $data['packaging_expenses'] }}</td>
+        <td class="text-start" colspan="4">Other Exps:-</td>
+        <td class="text-end">{{ number_format($data['expenses'],2) }}</td>
       </tr>
+      <tr>
+        <td class="text-start" colspan="4">Packaging Charges</td>
+        <td class="text-end">{{ number_format($data['packaging_expenses'],2) }}</td>
+      </tr>
+
       <tr>
         <td class="text-start fw-bold" colspan="4">Total Amount</td>
-        <td class="text-end fw-bold">{{ $data['invoicing_total_amount'] }}</td>
+        <td class="text-end fw-bold">{{ number_format($data['invoicing_total_amount'],2) }}</td>
       </tr>
     </tbody>
   </table>

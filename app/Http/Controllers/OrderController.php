@@ -56,7 +56,6 @@ class OrderController extends Controller
         foreach ($order->sellers as $seller) {
         if (is_string($seller->products)) {
             $seller->products = json_decode($seller->products, true);
-            Log::info($seller->products);
         }
         }
 
@@ -94,12 +93,12 @@ class OrderController extends Controller
             'user_id' => 'required|exists:users,id',
             'sellerdetails' => 'array|required',
             'sellerdetails.*.seller_name' => 'required|string',
-            'sellerdetails.*.quantity' => 'required|string',
-            'sellerdetails.*.seller_offer_rate' => 'required|numeric',
-            'sellerdetails.*.gst' => 'required|string',
-            'sellerdetails.*.buyer_offer_rate' => 'required|numeric',
-            'sellerdetails.*.final_shipping_value' => 'required|string',
-            'sellerdetails.*.total_amount' => 'required|numeric',
+            'sellerdetails.*.quantity' => 'nullable|string',
+            'sellerdetails.*.seller_offer_rate' => 'nullable|numeric',
+            'sellerdetails.*.gst' => 'nullable|string',
+            'sellerdetails.*.buyer_offer_rate' => 'nullable|numeric',
+            'sellerdetails.*.final_shipping_value' => 'nullable|string',
+            'sellerdetails.*.total_amount' => 'nullable|numeric',
 
 
     
@@ -150,6 +149,10 @@ class OrderController extends Controller
             'sellers.products.*.total_kg' => 'nullable|string',
             'sellers.products.*.product_total_amount' => 'nullable|numeric',
         ]);
+
+        $request->validate([
+            'mobile_number' => ['required', new UniqueMobileAcrossTables],
+        ]);
     
         $orderData = collect($validatedData)->except('sellers')->toArray();
         $orderData['sellerdetails'] = json_encode($validatedData['sellerdetails']);
@@ -180,7 +183,7 @@ class OrderController extends Controller
             'offer_id'  => 'nullable|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
-            'mobile_number' => 'nullable|string|max:20',
+            'mobile_number' => ['required', 'string', new UniqueMobileAcrossTables($offer_id)],
             'seller_assigned' => 'nullable|string|max:255',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
@@ -197,12 +200,12 @@ class OrderController extends Controller
             'user_id' => 'required|exists:users,id',
             'sellerdetails' => 'array|required',
             'sellerdetails.*.seller_name' => 'required|string',
-            'sellerdetails.*.quantity' => 'required|string',
-            'sellerdetails.*.seller_offer_rate' => 'required|numeric',
-            'sellerdetails.*.gst' => 'required|string',
-            'sellerdetails.*.buyer_offer_rate' => 'required|numeric',
-            'sellerdetails.*.final_shipping_value' => 'required|string',
-            'sellerdetails.*.total_amount' => 'required|numeric',
+            'sellerdetails.*.quantity' => 'nullable|string',
+            'sellerdetails.*.seller_offer_rate' => 'nullable|numeric',
+            'sellerdetails.*.gst' => 'nullable|string',
+            'sellerdetails.*.buyer_offer_rate' => 'nullable|numeric',
+            'sellerdetails.*.final_shipping_value' => 'nullable|string',
+            'sellerdetails.*.total_amount' => 'nullable|numeric',
 
     
             // Sellers array validation

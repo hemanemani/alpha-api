@@ -10,21 +10,51 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Validators\Failure;
+use App\Models\BlockedInternationalInquiry;
+use App\Models\BlockedInternationalOffer;
+use App\Models\BlockedInternationalOrder;
+use App\Rules\UniqueMobileAcrossTables;
 
 
 
 class InternationalInquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
 {
     public $errors = [];
+    protected $currentRow = 1;
 
     public function model(array $row)
     {
+        $this->currentRow++;
         static $nextInquiryNumber = null;
 
         if (is_null($nextInquiryNumber)) {
             $nextInquiryNumber = InternationInquiry::max('inquiry_number') ?? 0;
             $nextInquiryNumber++;
         }
+        
+        // Blocked mobile number check
+        if (
+            BlockedInternationalInquiry::where('mobile_number', $row['mobile_number'])->exists() ||
+            BlockedInternationalOffer::where('mobile_number', $row['mobile_number'])->exists() ||
+            BlockedInternationalOrder::where('mobile_number', $row['mobile_number'])->exists()
+        ) {
+            $this->errors[] = [
+                'row'    => $this->currentRow,
+                'errors' => ['This inquiry is blocked.']
+            ];
+            return null;
+        }
+
+        // UniqueMobileAcrossTables validation (manual)
+        $rule = new UniqueMobileAcrossTables;
+        if (!$rule->passes('mobile_number', $row['mobile_number'])) {
+            $this->errors[] = [
+                'row'    => $this->currentRow,
+                'errors' => [$rule->message()]
+            ];
+            return null;
+        }
+
         $validator = Validator::make($row, [
             'mobile_number'      => 'required',
             'inquiry_date'       => 'required|date_format:d-m-Y',
@@ -42,7 +72,7 @@ class InternationalInquiryImport implements ToModel, WithHeadingRow, SkipsOnFail
 
         if ($validator->fails()) {
             $this->errors[] = [
-                'row'    => $row['id'] ?? 'Unknown',
+                'row'    => $this->currentRow,
                 'errors' => $validator->errors()->all()
             ];
             return null;
