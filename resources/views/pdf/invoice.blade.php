@@ -78,6 +78,7 @@
     .text-uppercase{
     	text-transform: uppercase;
     }
+  
   </style>
 </head>
 <body>
@@ -88,7 +89,7 @@
     <h2 class="mb-3">Orgenik E-commerce Private Limited</h2>
     <hr>
     <p style="line-height: 15px;">
-      A – 401, Panchdhara Complex, Nr. Grand Bhagwati, S.G. Highway, Bodakdev, Ahmedabad - 380054
+      A – 401, Panchdhara Complex, Nr. Grand Bhagwati, S.G. Highway, Bodakdev, Ahmedabad - 380054 </br>
       Mobile No- 9328819369, email: business@orgenikbulk.com
     </p>
     <p class="fw-semibold mt-0">PAN: AADCO2634G</p>
@@ -109,8 +110,8 @@
     <tr>
       
 
-      <td style="width: 50%;"><strong>Date:</strong> {{ \Carbon\Carbon::parse($data['invoicing_invoice_generate_date'])->format('d/m/Y') }}</td>
-      <td style="width: 50%; margin-left:150px"><strong>Bill No:</strong> {{ $data['invoicing_invoice_number'] }} ({{ $financialYear }})
+      <td style="width: 50%;"><p class="fw-semibold text-decoration-underline">Date: {{ \Carbon\Carbon::parse($data['invoicing_invoice_generate_date'])->format('d/m/Y') }} </p></td>
+      <td style="width: 50%; margin-left:150px"><p class="fw-semibold text-decoration-underline">Bill No: {{ $data['invoicing_invoice_number'] }} ({{ $financialYear }}) </p>
      </td>
     </tr>
   </table>
@@ -120,7 +121,7 @@
 
   <div class="row mb-4">
     <div class="border p-2" style="width:45%">
-      <span class="fw-bold text-uppercase mb-1">Bill To</span>
+      <p class="fw-bold text-uppercase mb-1">Bill To</p>
       <p class="mb-0 fw-bold">{{ $data['invoice_to'] }}</p>
       <p>{{ $data['invoice_address'] }}</p>
       <p>GSTIN: {{ $data['invoice_gstin'] }}</p>
@@ -176,17 +177,17 @@
   <!-- Footer -->
 
   <table style="width: 100%;">
-  <tr>
-    <td style="width: 50%;"><strong>Bank Details</strong>
+  <tr class="footer">
+    <td style="width: 50%; vertical-align: bottom;"><p class="fw-semibold text-decoration-underline">Bank Details</strong>
       <p>Name: Orgenik E-commerce Pvt. Ltd.</p>
       <p>Account No: 50200053047210</p>
       <p>Branch: Ahmedabad - Ambawadi</p>
       <p>UPI ID: 8238820675@hdfcbank</p>
     </td>
-    <td style="width: 50%; text-align: right;">
-      <p>Orgenik E-commerce Pvt. Ltd.</p>
-      <p class="fw-semibold">P.K. Das</p>
-      <p >Authorized Person</p>
+    <td style="width: 50%; vertical-align: bottom;">
+      <p class="text-center">Orgenik E-commerce Pvt. Ltd.</p>
+      <p class="text-center">P.K. Das</p>
+      <p class="text-center">Authorized Person</p>
     </td>
   </tr>
   </table>

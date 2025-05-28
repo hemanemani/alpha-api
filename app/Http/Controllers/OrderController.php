@@ -77,7 +77,6 @@ class OrderController extends Controller
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
             'mobile_number' => 'string|max:20',
-            'seller_assigned' => 'nullable|string|max:255',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -91,14 +90,20 @@ class OrderController extends Controller
             'buyer_final_shipping_value' => 'nullable|numeric',
             'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
-            'sellerdetails' => 'array|required',
-            'sellerdetails.*.seller_name' => 'required|string',
-            'sellerdetails.*.quantity' => 'nullable|string',
-            'sellerdetails.*.seller_offer_rate' => 'nullable|numeric',
-            'sellerdetails.*.gst' => 'nullable|string',
-            'sellerdetails.*.buyer_offer_rate' => 'nullable|numeric',
-            'sellerdetails.*.final_shipping_value' => 'nullable|string',
-            'sellerdetails.*.total_amount' => 'nullable|numeric',
+            'products' => 'array|required',
+            'products.*.seller_assigned' => 'nullable|numeric|sometimes',
+            'products.*.product_name' => 'nullable|string',
+            'products.*.quantity' => 'nullable|numeric',
+            'products.*.seller_offer_rate' => 'nullable|numeric',
+            'products.*.gst' => 'nullable|numeric',
+            'products.*.buyer_offer_rate' => 'nullable|numeric',
+            'products.*.buyer_order_amount' => 'nullable|numeric',
+            'products.*.final_shipping_value' => 'nullable|numeric',
+            'products.*.total_amount' => 'nullable|numeric',
+            'products.*.hsn' => 'nullable|string',
+            'products.*.rate_per_kg' => 'nullable|numeric',
+            'products.*.total_kg' => 'nullable|numeric',
+            'products.*.product_total_amount' => 'nullable|numeric',
 
 
     
@@ -139,15 +144,8 @@ class OrderController extends Controller
             'sellers.*.total_amount_in_words' => 'nullable|string',
             'sellers.*.invoicing_amount' => 'nullable|numeric',
             'sellers.*.expenses' => 'nullable|numeric',
+            
 
-            // seller products
-
-            'sellers.*.products' => 'required|array|min:1',
-            'sellers.products.*.product_name' => 'nullable|string',
-            'sellers.products.*.hsn' => 'nullable|string',
-            'sellers.products.*.rate_per_kg' => 'nullable|string',
-            'sellers.products.*.total_kg' => 'nullable|string',
-            'sellers.products.*.product_total_amount' => 'nullable|numeric',
         ]);
 
         $request->validate([
@@ -155,7 +153,7 @@ class OrderController extends Controller
         ]);
     
         $orderData = collect($validatedData)->except('sellers')->toArray();
-        $orderData['sellerdetails'] = json_encode($validatedData['sellerdetails']);
+        $orderData['sellerdetails'] = json_encode($validatedData['products']);
 
         
         $order = Order::create($orderData);
@@ -163,9 +161,7 @@ class OrderController extends Controller
         OrderSeller::where('order_id', $order->id)->delete();
     
         foreach ($validatedData['sellers'] as $sellerData) {
-            $products = $sellerData['products'] ?? [];
             $sellerData['order_id'] = $order->id;
-            $sellerData['products'] = json_encode($products);
             OrderSeller::create($sellerData);
         }
     
@@ -184,7 +180,6 @@ class OrderController extends Controller
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
             'mobile_number' => ['required', 'string', new UniqueMobileAcrossTables($offer_id)],
-            'seller_assigned' => 'nullable|string|max:255',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -200,6 +195,7 @@ class OrderController extends Controller
             'user_id' => 'required|exists:users,id',
             'sellerdetails' => 'array|required',
             'sellerdetails.*.seller_name' => 'required|string',
+            'sellerdetails.*.product_name' => 'nullable|string',
             'sellerdetails.*.quantity' => 'nullable|string',
             'sellerdetails.*.seller_offer_rate' => 'nullable|numeric',
             'sellerdetails.*.gst' => 'nullable|string',
