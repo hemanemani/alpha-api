@@ -79,12 +79,9 @@ class InternationalOrderController extends Controller
             'buyer_bank_details' => 'nullable|string|max:255',
             'amount_received' => 'nullable|numeric',
             'amount_received_date' => 'nullable|date',
-            'amount_paid' => 'nullable|numeric',
-            'amount_paid_date' => 'nullable|date',
-            'logistics_through' => 'nullable|string|max:100',
-            'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_amount' => "nullable|numeric",
             'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
             'products' => 'array|required',
@@ -96,7 +93,6 @@ class InternationalOrderController extends Controller
             'products.*.buyer_offer_rate' => 'nullable|numeric',
             'products.*.buyer_order_amount' => 'nullable|numeric',
             'products.*.final_shipping_value' => 'nullable|numeric',
-            'products.*.total_amount' => 'nullable|numeric',
             'products.*.hsn' => 'nullable|string',
             'products.*.rate_per_kg' => 'nullable|numeric',
             'products.*.total_kg' => 'nullable|numeric',
@@ -126,6 +122,10 @@ class InternationalOrderController extends Controller
             'international_sellers.*.order_ready_date' => 'nullable|date',
             'international_sellers.*.order_delivery_date' => 'nullable|date',
             'international_sellers.*.order_dispatch_date' => 'nullable|date',
+            'international_sellers.*.amount_paid' => 'nullable|numeric',
+            'international_sellers.*.amount_paid_date' => 'nullable|date',
+            'international_sellers.*.logistics_through' => 'nullable|string|max:100',
+            'international_sellers.*.logistics_agency' => 'nullable|string|max:100',
     
             // Invoice
             'international_sellers.*.invoicing_invoice_generate_date' => 'nullable|date',
@@ -177,12 +177,9 @@ class InternationalOrderController extends Controller
             'buyer_bank_details' => 'nullable|string|max:255',
             'amount_received' => 'nullable|numeric',
             'amount_received_date' => 'nullable|date',
-            'amount_paid' => 'nullable|numeric',
-            'amount_paid_date' => 'nullable|date',
-            'logistics_through' => 'nullable|string|max:100',
-            'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_amount' => "nullable|numeric",
             'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
             'products' => 'array|required',
@@ -194,11 +191,11 @@ class InternationalOrderController extends Controller
             'products.*.buyer_offer_rate' => 'nullable|numeric',
             'products.*.buyer_order_amount' => 'nullable|numeric',
             'products.*.final_shipping_value' => 'nullable|numeric',
-            'products.*.total_amount' => 'nullable|numeric',
             'products.*.hsn' => 'nullable|string',
             'products.*.rate_per_kg' => 'nullable|numeric',
             'products.*.total_kg' => 'nullable|numeric',
             'products.*.product_total_amount' => 'nullable|numeric',
+            
 
     
             // Sellers array validation
@@ -225,6 +222,10 @@ class InternationalOrderController extends Controller
             'international_sellers.*.order_ready_date' => 'nullable|date',
             'international_sellers.*.order_delivery_date' => 'nullable|date',
             'international_sellers.*.order_dispatch_date' => 'nullable|date',
+            'international_sellers.*.amount_paid' => 'nullable|numeric',
+            'international_sellers.*.amount_paid_date' => 'nullable|date',
+            'international_sellers.*.logistics_through' => 'nullable|string|max:100',
+            'international_sellers.*.logistics_agency' => 'nullable|string|max:100',
     
             // Invoice
             'international_sellers.*.invoicing_invoice_generate_date' => 'nullable|date',

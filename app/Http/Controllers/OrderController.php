@@ -73,12 +73,9 @@ class OrderController extends Controller
             'buyer_bank_details' => 'nullable|string|max:255',
             'amount_received' => 'nullable|numeric',
             'amount_received_date' => 'nullable|date',
-            'amount_paid' => 'nullable|numeric',
-            'amount_paid_date' => 'nullable|date',
-            'logistics_through' => 'nullable|string|max:100',
-            'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_amount' => "nullable|numeric",
             'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
             'products' => 'array|required',
@@ -89,8 +86,6 @@ class OrderController extends Controller
             'products.*.gst' => 'nullable|numeric',
             'products.*.buyer_offer_rate' => 'nullable|numeric',
             'products.*.buyer_order_amount' => 'nullable|numeric',
-            'products.*.final_shipping_value' => 'nullable|numeric',
-            'products.*.total_amount' => 'nullable|numeric',
             'products.*.hsn' => 'nullable|string',
             'products.*.rate_per_kg' => 'nullable|numeric',
             'products.*.total_kg' => 'nullable|numeric',
@@ -122,6 +117,10 @@ class OrderController extends Controller
             'sellers.*.order_ready_date' => 'nullable|date',
             'sellers.*.order_delivery_date' => 'nullable|date',
             'sellers.*.order_dispatch_date' => 'nullable|date',
+            'sellers.*.amount_paid' => 'nullable|numeric',
+            'sellers.*.amount_paid_date' => 'nullable|date',
+            'sellers.*.logistics_through' => 'nullable|string|max:100',
+            'sellers.*.logistics_agency' => 'nullable|string|max:100',
 
     
             // Invoice
@@ -176,12 +175,9 @@ class OrderController extends Controller
             'buyer_bank_details' => 'nullable|string|max:255',
             'amount_received' => 'nullable|numeric',
             'amount_received_date' => 'nullable|date',
-            'amount_paid' => 'nullable|numeric',
-            'amount_paid_date' => 'nullable|date',
-            'logistics_through' => 'nullable|string|max:100',
-            'logistics_agency' => 'nullable|string|max:100',
             'shipping_estimate_value' => 'nullable|numeric',
             'buyer_final_shipping_value' => 'nullable|numeric',
+            'buyer_amount' => "nullable|numeric",
             'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
             'products' => 'array|required',
@@ -191,8 +187,6 @@ class OrderController extends Controller
             'products.*.seller_offer_rate' => 'nullable|numeric',
             'products.*.gst' => 'nullable|string',
             'products.*.buyer_offer_rate' => 'nullable|numeric',
-            'products.*.final_shipping_value' => 'nullable|string',
-            'products.*.total_amount' => 'nullable|numeric',
             'products.*.hsn' => 'nullable|string',
             'products.*.rate_per_kg' => 'nullable|numeric',
             'products.*.total_kg' => 'nullable|numeric',
@@ -224,6 +218,11 @@ class OrderController extends Controller
             'sellers.*.order_ready_date' => 'nullable|date',
             'sellers.*.order_delivery_date' => 'nullable|date',
             'sellers.*.order_dispatch_date' => 'nullable|date',
+            'sellers.*.amount_paid' => 'nullable|numeric',
+            'sellers.*.amount_paid_date' => 'nullable|date',
+            'sellers.*.logistics_through' => 'nullable|string|max:100',
+            'sellers.*.logistics_agency' => 'nullable|string|max:100',
+
 
     
             // Invoice
@@ -240,8 +239,6 @@ class OrderController extends Controller
 
         ]);
 
-
-
         if ($request->has('offer_id') && $request->offer_id) {
             $order = Order::where('offer_id', $request->offer_id)->first();
         } else {
@@ -254,8 +251,6 @@ class OrderController extends Controller
                 'message' => 'Order not found',
             ], 404);
         }
-
-        Log::info($order);
 
         $order->fill($validatedData);
 
