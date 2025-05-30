@@ -54,14 +54,9 @@ class InternationalOrderController extends Controller
             return response()->json(['error' => 'International Order not found'], 404);
         }
 
-         if ($international_order && is_string($international_order->sellerdetails)) {
+        
+        if ($international_order && is_string($international_order->sellerdetails)) {
             $international_order->sellerdetails = json_decode($international_order->sellerdetails, true);
-        }
-
-        foreach ($international_order->international_sellers as $international_seller) {
-        if (is_string($international_seller->products)) {
-            $international_seller->products = json_decode($international_seller->products, true);
-        }
         }
 
 
@@ -79,7 +74,6 @@ class InternationalOrderController extends Controller
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
             'mobile_number' => 'nullable|string|max:20',
-            'seller_assigned' => 'nullable|string|max:255',
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -171,14 +165,13 @@ class InternationalOrderController extends Controller
         ]);
     }
 
-    public function update(Request $request, $international_offer_id)
+    public function update(Request $request, InternationalOrder $international_order)
     {
         $validatedData = $request->validate([
             'international_offer_id'  => 'nullable|numeric',
             'order_number' => 'nullable|numeric',
             'name' => 'nullable|string|max:255',
-            'mobile_number' => ['required', 'string', new UniqueMobileAcrossTables($international_offer_id)],
-            'seller_assigned' => 'nullable|string|max:255',
+            'mobile_number' => ['required', 'string', new UniqueMobileAcrossTables($international_order->id)],
             'buyer_gst_number' => 'nullable|string|max:100',
             'buyer_pan' => 'nullable|string|max:100',
             'buyer_bank_details' => 'nullable|string|max:255',
@@ -192,14 +185,21 @@ class InternationalOrderController extends Controller
             'buyer_final_shipping_value' => 'nullable|numeric',
             'buyer_total_amount' => "nullable|numeric",
             'user_id' => 'required|exists:users,id',
-            'sellerdetails' => 'array|required',
-            'sellerdetails.*.seller_name' => 'required|string',
-            'sellerdetails.*.quantity' => 'nullable|string',
-            'sellerdetails.*.seller_offer_rate' => 'nullable|numeric',
-            'sellerdetails.*.gst' => 'nullable|string',
-            'sellerdetails.*.buyer_offer_rate' => 'nullable|numeric',
-            'sellerdetails.*.final_shipping_value' => 'nullable|string',
-            'sellerdetails.*.total_amount' => 'nullable|numeric',
+            'products' => 'array|required',
+            'products.*.seller_assigned' => 'nullable|numeric|sometimes',
+            'products.*.product_name' => 'nullable|string',
+            'products.*.quantity' => 'nullable|numeric',
+            'products.*.seller_offer_rate' => 'nullable|numeric',
+            'products.*.gst' => 'nullable|numeric',
+            'products.*.buyer_offer_rate' => 'nullable|numeric',
+            'products.*.buyer_order_amount' => 'nullable|numeric',
+            'products.*.final_shipping_value' => 'nullable|numeric',
+            'products.*.total_amount' => 'nullable|numeric',
+            'products.*.hsn' => 'nullable|string',
+            'products.*.rate_per_kg' => 'nullable|numeric',
+            'products.*.total_kg' => 'nullable|numeric',
+            'products.*.product_total_amount' => 'nullable|numeric',
+
     
             // Sellers array validation
             'international_sellers' => 'required|array|min:1',
@@ -238,14 +238,7 @@ class InternationalOrderController extends Controller
             'international_sellers.*.invoicing_amount' => 'nullable|numeric',
             'international_sellers.*.expenses' => 'nullable|numeric',
 
-            // seller products
-
-            'international_sellers.*.products' => 'required|array|min:1',
-            'international_sellers.products.*.product_name' => 'nullable|string',
-            'international_sellers.products.*.hsn' => 'nullable|string',
-            'international_sellers.products.*.rate_per_kg' => 'nullable|string',
-            'international_sellers.products.*.total_kg' => 'nullable|string',
-            'international_sellers.products.*.product_total_amount' => 'nullable|numeric',
+           
         ]);
 
         if ($request->has('international_offer_id') && $request->international_offer_id) {
@@ -263,21 +256,24 @@ class InternationalOrderController extends Controller
     
 
         $international_order->fill($validatedData);
+        $international_order['sellerdetails'] = json_encode($validatedData['products']);
         $orderIsDirty = $international_order->isDirty();
-            
+
         if ($orderIsDirty) {
-            $orderData = collect($validatedData)->except('international_sellers')->toArray();
-            $orderData['sellerdetails'] = json_encode($validatedData['sellerdetails']);
-            $international_order->update($orderData);
-        } 
+            $international_order->save();
+        }
+            
+        // if ($orderIsDirty) {
+        //     $orderData = collect($validatedData)->except('international_sellers')->toArray();
+        //     $orderData['sellerdetails'] = json_encode($validatedData['products']);
+        //     $international_order->update($orderData);
+        // } 
     
     
         InternationalOrderSeller::where('international_order_id', $international_order->id)->delete();
     
         foreach ($request->input('international_sellers') as $sellerData) {
-            $products = $sellerData['products'] ?? [];
             $sellerData['international_order_id'] = $international_order->id; 
-            $sellerData['products'] = json_encode($products);   
             InternationalOrderSeller::create($sellerData);
         }
         

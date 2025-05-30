@@ -20,6 +20,27 @@ class UniqueMobileAcrossTables implements Rule
     public function passes($attribute, $value): bool
     {
 
+        $existsInInquiryAsOrderFlow = DB::table('inquiries')
+        ->where('mobile_number', $value)
+        ->where('status', 1)
+        ->where('offers_status', 1)
+        ->exists();
+
+        if ($existsInInquiryAsOrderFlow) {
+            return true;
+        }
+
+        $existsInInternationalInquiryAsOrderFlow = DB::table('international_inquiries')
+        ->where('mobile_number', $value)
+        ->where('status', 1)
+        ->where('offers_status', 1)
+        ->exists();
+
+        if ($existsInInternationalInquiryAsOrderFlow) {
+            return true;
+        }
+
+
         $isBlocked = DB::table('blocked_inquiries')->where('mobile_number', $value)->exists() || DB::table('blocked_domestic_offers')->where('mobile_number', $value)->exists() || DB::table('blocked_orders')->where('mobile_number', $value)->exists() || DB::table('blocked_international_inquiries')->where('mobile_number', $value)->exists() || DB::table('blocked_international_offers')->where('mobile_number', $value)->exists() || DB::table('blocked_international_orders')->where('mobile_number', $value)->exists();
 
         if ($isBlocked) {

@@ -128,7 +128,7 @@
     </div>
   </div>
 
-  @php $products = $data['products'] ?? []; @endphp
+  @php $products = $data['products'] ?? [];@endphp
 
   <!-- Product Table -->
   <table class="table mb-4">
