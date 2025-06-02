@@ -41,7 +41,7 @@ class Order extends Model
         return $this->belongsTo(User::class,'user_id');
     }
 
-    public function sellers() {
+    public function order_sellers() {
         return $this->hasMany(OrderSeller::class);
     }
     public function offer()

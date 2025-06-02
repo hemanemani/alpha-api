@@ -18,14 +18,14 @@ class OrderController extends Controller
    public function index()
     {
         $orders = \App\Models\Order::with([       
-                'sellers',                         
+                'order_sellers',                         
                 'offer.inquiry.user',
                 'user'
             ])
             ->where('status', 2)
             ->orderBy('id', 'desc')
             ->where(function($query) {
-                $query->whereHas('sellers')
+                $query->whereHas('order_sellers')
                     ->orWhereHas('offer.inquiry', function ($subQuery) {
                         $subQuery->where('orders_status',2);
                     });
@@ -40,7 +40,7 @@ class OrderController extends Controller
     public function showByOrderId($id)
     {
         $order = \App\Models\Order::with([
-            'sellers',
+            'order_sellers',
             'offer.inquiry.user',
             'user'
         ])->where('id', $id)->first();
@@ -55,7 +55,7 @@ class OrderController extends Controller
 
         return response()->json([
             'order' => $order,
-            'sellers' => $order->sellers,
+            'sellers' => $order->order_sellers,
             'inquiry' => $order->offer->inquiry ?? null,
         ]);
 
@@ -94,46 +94,46 @@ class OrderController extends Controller
 
     
             // Sellers array validation
-            'sellers' => 'required|array|min:1',
-            'sellers.*.seller_name' => 'nullable|string|max:255',
-            'sellers.*.seller_address' => 'nullable|string|max:255',
-            'sellers.*.seller_contact' => 'nullable|string|max:20',
-            'sellers.*.shipping_name' => 'nullable|string|max:255',
-            'sellers.*.address_line_1' => 'nullable|string|max:255',
-            'sellers.*.address_line_2' => 'nullable|string|max:255',
-            'sellers.*.seller_pincode' => 'nullable|string|max:20',
-            'sellers.*.seller_contact_person_name' => 'nullable|string|max:255',
-            'sellers.*.seller_contact_person_number' => 'nullable|string|max:20',
-            'sellers.*.no_of_boxes' => 'nullable|numeric',
-            'sellers.*.weight_per_unit' => 'nullable|numeric',
-            'sellers.*.dimension_unit' => 'nullable|string|max:10',
-            'sellers.*.length' => 'nullable|numeric',
-            'sellers.*.width' => 'nullable|numeric',
-            'sellers.*.height' => 'nullable|numeric',
-            'sellers.*.invoice_generate_date' => 'nullable|date',
-            'sellers.*.invoice_value' => 'nullable|numeric',
-            'sellers.*.invoice_number' => 'nullable|string|max:100',
-            'sellers.*.delivery_address' => 'nullable|string|max:100',
-            'sellers.*.order_ready_date' => 'nullable|date',
-            'sellers.*.order_delivery_date' => 'nullable|date',
-            'sellers.*.order_dispatch_date' => 'nullable|date',
-            'sellers.*.amount_paid' => 'nullable|numeric',
-            'sellers.*.amount_paid_date' => 'nullable|date',
-            'sellers.*.logistics_through' => 'nullable|string|max:100',
-            'sellers.*.logistics_agency' => 'nullable|string|max:100',
+            'order_sellers' => 'required|array|min:1',
+            'order_sellers.*.seller_name' => 'nullable|string|max:255',
+            'order_sellers.*.seller_address' => 'nullable|string|max:255',
+            'order_sellers.*.seller_contact' => 'nullable|string|max:20',
+            'order_sellers.*.shipping_name' => 'nullable|string|max:255',
+            'order_sellers.*.address_line_1' => 'nullable|string|max:255',
+            'order_sellers.*.address_line_2' => 'nullable|string|max:255',
+            'order_sellers.*.seller_pincode' => 'nullable|string|max:20',
+            'order_sellers.*.seller_contact_person_name' => 'nullable|string|max:255',
+            'order_sellers.*.seller_contact_person_number' => 'nullable|string|max:20',
+            'order_sellers.*.no_of_boxes' => 'nullable|numeric',
+            'order_sellers.*.weight_per_unit' => 'nullable|numeric',
+            'order_sellers.*.dimension_unit' => 'nullable|string|max:10',
+            'order_sellers.*.length' => 'nullable|numeric',
+            'order_sellers.*.width' => 'nullable|numeric',
+            'order_sellers.*.height' => 'nullable|numeric',
+            'order_sellers.*.invoice_generate_date' => 'nullable|date',
+            'order_sellers.*.invoice_value' => 'nullable|numeric',
+            'order_sellers.*.invoice_number' => 'nullable|string|max:100',
+            'order_sellers.*.delivery_address' => 'nullable|string|max:100',
+            'order_sellers.*.order_ready_date' => 'nullable|date',
+            'order_sellers.*.order_delivery_date' => 'nullable|date',
+            'order_sellers.*.order_dispatch_date' => 'nullable|date',
+            'order_sellers.*.amount_paid' => 'nullable|numeric',
+            'order_sellers.*.amount_paid_date' => 'nullable|date',
+            'order_sellers.*.logistics_through' => 'nullable|string|max:100',
+            'order_sellers.*.logistics_agency' => 'nullable|string|max:100',
 
     
             // Invoice
-            'sellers.*.invoicing_invoice_generate_date' => 'nullable|date',
-            'sellers.*.invoicing_invoice_number' => 'nullable|string',
-            'sellers.*.invoice_to' => 'nullable|string',
-            'sellers.*.invoice_address' => 'nullable|string',
-            'sellers.*.invoice_gstin' => 'nullable|string',
-            'sellers.*.packaging_expenses' => 'nullable|numeric',
-            'sellers.*.invoicing_total_amount' => 'nullable|numeric',
-            'sellers.*.total_amount_in_words' => 'nullable|string',
-            'sellers.*.invoicing_amount' => 'nullable|numeric',
-            'sellers.*.expenses' => 'nullable|numeric',
+            'order_sellers.*.invoicing_invoice_generate_date' => 'nullable|date',
+            'order_sellers.*.invoicing_invoice_number' => 'nullable|string',
+            'order_sellers.*.invoice_to' => 'nullable|string',
+            'order_sellers.*.invoice_address' => 'nullable|string',
+            'order_sellers.*.invoice_gstin' => 'nullable|string',
+            'order_sellers.*.packaging_expenses' => 'nullable|numeric',
+            'order_sellers.*.invoicing_total_amount' => 'nullable|numeric',
+            'order_sellers.*.total_amount_in_words' => 'nullable|string',
+            'order_sellers.*.invoicing_amount' => 'nullable|numeric',
+            'order_sellers.*.expenses' => 'nullable|numeric',
             
 
         ]);
@@ -142,15 +142,15 @@ class OrderController extends Controller
             'mobile_number' => ['required', new UniqueMobileAcrossTables],
         ]);
     
-        $orderData = collect($validatedData)->except('sellers')->toArray();
+        $orderData = collect($validatedData)->except('order_sellers')->toArray();
         $orderData['sellerdetails'] = json_encode($validatedData['products']);
 
         
         $order = Order::create($orderData);
     
-        OrderSeller::where('order_id', $order->id)->delete();
+        // OrderSeller::where('order_id', $order->id)->delete();
     
-        foreach ($validatedData['sellers'] as $sellerData) {
+        foreach ($validatedData['order_sellers'] as $sellerData) {
             $sellerData['order_id'] = $order->id;
             OrderSeller::create($sellerData);
         }
@@ -159,9 +159,11 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Order created successfully',
             'order' => $order,
-            'sellers' => $order->sellers,
+            'order_sellers' => $order->order_sellers,
         ]);
     }
+
+    
 
     public function update(Request $request, Order $order)
     {
@@ -195,47 +197,47 @@ class OrderController extends Controller
 
     
             // Sellers array validation
-            'sellers' => 'required|array|min:1',
-            'sellers.*.seller_name' => 'nullable|string|max:255',
-            'sellers.*.seller_address' => 'nullable|string|max:255',
-            'sellers.*.seller_contact' => 'nullable|string|max:20',
-            'sellers.*.shipping_name' => 'nullable|string|max:255',
-            'sellers.*.address_line_1' => 'nullable|string|max:255',
-            'sellers.*.address_line_2' => 'nullable|string|max:255',
-            'sellers.*.seller_pincode' => 'nullable|string|max:20',
-            'sellers.*.seller_contact_person_name' => 'nullable|string|max:255',
-            'sellers.*.seller_contact_person_number' => 'nullable|string|max:20',
-            'sellers.*.no_of_boxes' => 'nullable|numeric',
-            'sellers.*.weight_per_unit' => 'nullable|numeric',
-            'sellers.*.dimension_unit' => 'nullable|string|max:10',
-            'sellers.*.length' => 'nullable|numeric',
-            'sellers.*.width' => 'nullable|numeric',
-            'sellers.*.height' => 'nullable|numeric',
-            'sellers.*.invoice_generate_date' => 'nullable|date',
-            'sellers.*.invoice_value' => 'nullable|numeric',
-            'sellers.*.invoice_number' => 'nullable|string|max:100',
-            'sellers.*.delivery_address' => 'nullable|string|max:100',
-            'sellers.*.order_ready_date' => 'nullable|date',
-            'sellers.*.order_delivery_date' => 'nullable|date',
-            'sellers.*.order_dispatch_date' => 'nullable|date',
-            'sellers.*.amount_paid' => 'nullable|numeric',
-            'sellers.*.amount_paid_date' => 'nullable|date',
-            'sellers.*.logistics_through' => 'nullable|string|max:100',
-            'sellers.*.logistics_agency' => 'nullable|string|max:100',
+            'order_sellers' => 'required|array|min:1',
+            'order_sellers.*.seller_name' => 'nullable|string|max:255',
+            'order_sellers.*.seller_address' => 'nullable|string|max:255',
+            'order_sellers.*.seller_contact' => 'nullable|string|max:20',
+            'order_sellers.*.shipping_name' => 'nullable|string|max:255',
+            'order_sellers.*.address_line_1' => 'nullable|string|max:255',
+            'order_sellers.*.address_line_2' => 'nullable|string|max:255',
+            'order_sellers.*.seller_pincode' => 'nullable|string|max:20',
+            'order_sellers.*.seller_contact_person_name' => 'nullable|string|max:255',
+            'order_sellers.*.seller_contact_person_number' => 'nullable|string|max:20',
+            'order_sellers.*.no_of_boxes' => 'nullable|numeric',
+            'order_sellers.*.weight_per_unit' => 'nullable|numeric',
+            'order_sellers.*.dimension_unit' => 'nullable|string|max:10',
+            'order_sellers.*.length' => 'nullable|numeric',
+            'order_sellers.*.width' => 'nullable|numeric',
+            'order_sellers.*.height' => 'nullable|numeric',
+            'order_sellers.*.invoice_generate_date' => 'nullable|date',
+            'order_sellers.*.invoice_value' => 'nullable|numeric',
+            'order_sellers.*.invoice_number' => 'nullable|string|max:100',
+            'order_sellers.*.delivery_address' => 'nullable|string|max:100',
+            'order_sellers.*.order_ready_date' => 'nullable|date',
+            'order_sellers.*.order_delivery_date' => 'nullable|date',
+            'order_sellers.*.order_dispatch_date' => 'nullable|date',
+            'order_sellers.*.amount_paid' => 'nullable|numeric',
+            'order_sellers.*.amount_paid_date' => 'nullable|date',
+            'order_sellers.*.logistics_through' => 'nullable|string|max:100',
+            'order_sellers.*.logistics_agency' => 'nullable|string|max:100',
 
 
     
             // Invoice
-            'sellers.*.invoicing_invoice_generate_date' => 'nullable|date',
-            'sellers.*.invoicing_invoice_number' => 'nullable|string',
-            'sellers.*.invoice_to' => 'nullable|string',
-            'sellers.*.invoice_address' => 'nullable|string',
-            'sellers.*.invoice_gstin' => 'nullable|string',
-            'sellers.*.packaging_expenses' => 'nullable|numeric',
-            'sellers.*.invoicing_total_amount' => 'nullable|numeric',
-            'sellers.*.total_amount_in_words' => 'nullable|string',
-            'sellers.*.invoicing_amount' => 'nullable|numeric',
-            'sellers.*.expenses' => 'nullable|numeric',
+            'order_sellers.*.invoicing_invoice_generate_date' => 'nullable|date',
+            'order_sellers.*.invoicing_invoice_number' => 'nullable|string',
+            'order_sellers.*.invoice_to' => 'nullable|string',
+            'order_sellers.*.invoice_address' => 'nullable|string',
+            'order_sellers.*.invoice_gstin' => 'nullable|string',
+            'order_sellers.*.packaging_expenses' => 'nullable|numeric',
+            'order_sellers.*.invoicing_total_amount' => 'nullable|numeric',
+            'order_sellers.*.total_amount_in_words' => 'nullable|string',
+            'order_sellers.*.invoicing_amount' => 'nullable|numeric',
+            'order_sellers.*.expenses' => 'nullable|numeric',
 
         ]);
 
@@ -263,17 +265,36 @@ class OrderController extends Controller
         } 
 
     
-        OrderSeller::where('order_id', $order->id)->delete();
     
-        foreach ($request->input('sellers') as $sellerData) {
-            $sellerData['order_id'] = $order->id;
-            OrderSeller::create($sellerData);
+        if ($request->has('order_sellers') && is_array($request->order_sellers)) {
+            foreach ($request->input('order_sellers') as $sellerData) {
+                    $sellerData['order_id'] = $order->id;
+
+                    if (!empty($sellerData['id'])) {
+                        $existingSeller = OrderSeller::where('id', $sellerData['id'])
+                            ->where('order_id', $order->id)
+                            ->first();
+
+                        if ($existingSeller) {
+                            $existingSeller->update($sellerData);
+                        }
+                    } else {
+                        OrderSeller::create($sellerData);
+                    }
+                }
+
+        } else {
+            Log::warning('No order_sellers found in request or not an array.');
         }
+
+
+
+
 
         return response()->json([
             'message' => 'Order updated successfully',
             'order' => $order,
-            'sellers' => $order->sellers,
+            'order_sellers' => $order->order_sellers,
         ]);
     }
 

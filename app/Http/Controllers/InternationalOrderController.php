@@ -39,10 +39,6 @@ class InternationalOrderController extends Controller
     
     public function showByOrderId($id)
     {
-        
-        // $international_order = InternationalOrder::with('international_sellers')
-        //             ->where('id', $id)
-        //             ->first();
 
         $international_order = \App\Models\InternationalOrder::with([
             'international_sellers',
@@ -263,19 +259,28 @@ class InternationalOrderController extends Controller
         if ($orderIsDirty) {
             $international_order->save();
         }
-            
-        // if ($orderIsDirty) {
-        //     $orderData = collect($validatedData)->except('international_sellers')->toArray();
-        //     $orderData['sellerdetails'] = json_encode($validatedData['products']);
-        //     $international_order->update($orderData);
-        // } 
-    
-    
-        InternationalOrderSeller::where('international_order_id', $international_order->id)->delete();
-    
-        foreach ($request->input('international_sellers') as $sellerData) {
-            $sellerData['international_order_id'] = $international_order->id; 
-            InternationalOrderSeller::create($sellerData);
+
+
+
+        if ($request->has('international_sellers') && is_array($request->international_sellers)) {
+            foreach ($request->input('international_sellers') as $sellerData) {
+                    $sellerData['international_order_id'] = $international_order->id;
+
+                    if (!empty($sellerData['id'])) {
+                        $existingSeller = InternationalOrderSeller::where('id', $sellerData['id'])
+                            ->where('international_order_id', $international_order->id)
+                            ->first();
+
+                        if ($existingSeller) {
+                            $existingSeller->update($sellerData);
+                        }
+                    } else {
+                        InternationalOrderSeller::create($sellerData);
+                    }
+                }
+
+        } else {
+            Log::warning('No order_sellers found in request or not an array.');
         }
         
     
