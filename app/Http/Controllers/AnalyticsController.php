@@ -798,13 +798,13 @@ class AnalyticsController extends Controller
 
 
         $ordersAmountReceived = Order::whereNotNull('amount_received')->sum('amount_received');
-        $ordersAmountPaid = Order::whereNotNull('amount_paid')->sum('amount_paid');
+        $ordersAmountPaid = OrderSeller::whereNotNull('amount_paid')->sum('amount_paid');
         $ordersFinalShippingValue = Order::whereNotNull('buyer_final_shipping_value')->sum('buyer_final_shipping_value');
         $ordersNetProfitLoss = $ordersAmountReceived - $ordersAmountPaid - $ordersFinalShippingValue;
 
 
         $internationalOrdersAmountReceived = InternationalOrder::whereNotNull('amount_received')->sum('amount_received');
-        $internationalOrdersAmountPaid = InternationalOrder::whereNotNull('amount_paid')->sum('amount_paid');
+        $internationalOrdersAmountPaid = InternationalOrderSeller::whereNotNull('amount_paid')->sum('amount_paid');
         $internationalOrdersFinalShippingValue = InternationalOrder::whereNotNull('buyer_final_shipping_value')->sum('buyer_final_shipping_value');
         $internationalOrdersNetProfitLoss = $internationalOrdersAmountReceived - $internationalOrdersAmountPaid - $internationalOrdersFinalShippingValue;
 

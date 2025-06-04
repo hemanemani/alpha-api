@@ -103,8 +103,8 @@ class InquiryController extends Controller
         $totalSellerOrderCount = $deliveredOrderedCount + $dispatchedOrderedCount + $pendingOrderedCount;
 
 
-        $shipRocketCount = Order::where('logistics_through', 'ship_rocket')->count();
-        $sellerFulfilledCount = Order::where('logistics_through', 'seller_fulfilled')->count();
+        $shipRocketCount = OrderSeller::where('logistics_through', 'ship_rocket')->count();
+        $sellerFulfilledCount = OrderSeller::where('logistics_through', 'seller_fulfilled')->count();
         $totalLogisticsCount = $shipRocketCount + $sellerFulfilledCount;
 
         return response()->json([

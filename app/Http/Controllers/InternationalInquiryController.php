@@ -119,8 +119,8 @@ class InternationalInquiryController extends Controller
         $totalSellerOrderCount = $deliveredOrderedCount + $dispatchedOrderedCount + $pendingOrderedCount;
 
 
-        $shipRocketCount = InternationalOrder::where('logistics_through', 'ship_rocket')->count();
-        $sellerFulfilledCount = InternationalOrder::where('logistics_through', 'seller_fulfilled')->count();
+        $shipRocketCount = InternationalOrderSeller::where('logistics_through', 'ship_rocket')->count();
+        $sellerFulfilledCount = InternationalOrderSeller::where('logistics_through', 'seller_fulfilled')->count();
         $totalLogisticsCount = $shipRocketCount + $sellerFulfilledCount;
 
         return response()->json([

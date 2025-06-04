@@ -91,7 +91,7 @@ class UserController extends Controller
             'email' => 'nullable|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
             'user_name' => 'required|string|max:255',
-            'mobile_number' => 'required|string|max:255',
+            'mobile_number' => 'nullable|string|max:255',
             'access_level' => 'required|in:full,view,limited',
             'allowed_pages' => 'nullable|array',
             'is_admin'      => 'integer'
@@ -221,7 +221,7 @@ class UserController extends Controller
             'email' => 'nullable|email|unique:users,email,' . $user->id,
             'password' => 'nullable|confirmed|min:8',
             'user_name' => 'required|string|max:255',
-            'mobile_number' => 'required|string|max:255',
+            'mobile_number' => 'nullable|string|max:255',
             'access_level' => 'required|in:full,view,limited',
             'allowed_pages' => 'nullable|array',
             'is_admin'      => 'integer'
@@ -241,6 +241,8 @@ class UserController extends Controller
             $user->update([
                 'password' => bcrypt($request->password),
             ]);
+            $user->tokens()->delete();
+
         }
 
         return response()->json([
