@@ -95,8 +95,8 @@ class DashboardController extends Controller
         $inquiryCount = Inquiry::where('status','2')->count();
         $interInquiryCount = InternationInquiry::where('status','2')->count();
 
-        $inquiryOffersCount = Offer::where('status','2')->count();
-        $interInquiryOffersCount = InternationalOffer::where('status','2')->count();
+        $inquiryOffersCount = Inquiry::where('status','1')->count();
+        $interInquiryOffersCount = InternationInquiry::where('status','1')->count();
 
         $OrdersCount = Order::where('status','2')->count();
         $interOrdersCount = InternationalOrder::where('status','2')->count();

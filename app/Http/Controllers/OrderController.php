@@ -185,7 +185,7 @@ class OrderController extends Controller
             'products' => 'array|required',
             'products.*.seller_assigned' => 'nullable|numeric|sometimes',
             'products.*.product_name' => 'nullable|string',
-            'products.*.quantity' => 'nullable|string',
+            'products.*.quantity' => 'nullable|numeric',
             'products.*.seller_offer_rate' => 'nullable|numeric',
             'products.*.gst' => 'nullable|string',
             'products.*.buyer_offer_rate' => 'nullable|numeric',
