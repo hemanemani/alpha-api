@@ -1085,6 +1085,12 @@ class InquiryController extends Controller
         $nextNumber = \App\Models\Inquiry::max('inquiry_number') + 1;
         return response()->json(['next_inquiry_number' => $nextNumber]);
     }
-
+    public function getNextSerialNumber()
+    {
+        $totalActive = Inquiry::where('status', 2)->count();
+        return response()->json([
+        'next_serial' => $totalActive + 1,
+        ]);
+    }
     
 }

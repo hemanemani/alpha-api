@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UniqueMobileAcrossTables implements Rule
 {
@@ -15,72 +16,180 @@ class UniqueMobileAcrossTables implements Rule
         $this->excludeId = $excludeId;
     }
 
-
-
     public function passes($attribute, $value): bool
     {
-
-        $existsInInquiryAsOrderFlow = DB::table('inquiries')
-        ->where('mobile_number', $value)
-        ->where('status', 1)
-        ->where('offers_status', 1)
-        ->exists();
-
-        if ($existsInInquiryAsOrderFlow) {
-            return true;
-        }
-
-        $existsInInternationalInquiryAsOrderFlow = DB::table('international_inquiries')
-        ->where('mobile_number', $value)
-        ->where('status', 1)
-        ->where('offers_status', 1)
-        ->exists();
-
-        if ($existsInInternationalInquiryAsOrderFlow) {
-            return true;
-        }
-
-
-        $isBlocked = DB::table('blocked_inquiries')->where('mobile_number', $value)->exists() || DB::table('blocked_domestic_offers')->where('mobile_number', $value)->exists() || DB::table('blocked_orders')->where('mobile_number', $value)->exists() || DB::table('blocked_international_inquiries')->where('mobile_number', $value)->exists() || DB::table('blocked_international_offers')->where('mobile_number', $value)->exists() || DB::table('blocked_international_orders')->where('mobile_number', $value)->exists();
-
-        if ($isBlocked) {
-            $this->conflictSource = 'blocked';
-            return false;
-        }
-
-        $tables = [
-            'inquiries' => true,
-            'orders' => true,
-            'international_inquiries' => true,
-            'international_orders' => true,
-        ];
-
-        foreach ($tables as $table => $shouldExcludeId) {
-            $query = DB::table($table)->where('mobile_number', $value);
-
-            if ($shouldExcludeId && $this->excludeId) {
-                $query->where('id', '!=', $this->excludeId);
+            if (request()->input('force')) {
+                return true;
             }
 
-            if ($query->exists()) {
-                $this->conflictSource = $table;
-                return false;
-            }
-        }
-        return true;
 
+            // Check special cases where existence means OK
+            $existsAsOrderFlow = DB::table('inquiries')
+                ->where('mobile_number', $value)
+                ->where('status', 1)
+                ->where('offers_status', 1)
+                ->exists();
+
+            if ($existsAsOrderFlow) {
+                return true;
+            }
+
+            $existsIntlAsOrderFlow = DB::table('international_inquiries')
+                ->where('mobile_number', $value)
+                ->where('status', 1)
+                ->where('offers_status', 1)
+                ->exists();
+
+            if ($existsIntlAsOrderFlow) {
+                return true;
+            }
+
+            // Check blocked tables
+            $isBlocked = DB::table('blocked_inquiries')->where('mobile_number', $value)->exists()
+                || DB::table('blocked_domestic_offers')->where('mobile_number', $value)->exists()
+                || DB::table('blocked_orders')->where('mobile_number', $value)->exists()
+                || DB::table('blocked_international_inquiries')->where('mobile_number', $value)->exists()
+                || DB::table('blocked_international_offers')->where('mobile_number', $value)->exists()
+                || DB::table('blocked_international_orders')->where('mobile_number', $value)->exists();
+
+
+            $conflicts = [];
+
+
+            if ($isBlocked) {
+                $conflicts[] = 'blocked';
+            }
+
+            // Domestic Inquiries
+                $inquiryRecords = DB::table('inquiries')
+                    ->where('mobile_number', $value)
+                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
+                    ->get();
+
+                if ($inquiryRecords->count()) {
+                    foreach ($inquiryRecords as $record) {
+                        $conflicts = array_merge($conflicts, $this->detectConflictType($record));
+                    }
+                }
+
+                // Domestic Orders
+
+                $orderRecords = DB::table('orders')
+                    ->where('mobile_number', $value)
+                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
+                    ->get();
+
+                if ($orderRecords->count()) {
+                    foreach ($orderRecords as $record) {
+                        $conflicts = array_merge($conflicts, $this->detectConflictType($record));
+                    }
+                }
+
+
+                // International Inquiries
+                $intlInquiryRecords = DB::table('international_inquiries')
+                    ->where('mobile_number', $value)
+                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
+                    ->get();
+
+                if ($intlInquiryRecords->count()) {
+                    foreach ($intlInquiryRecords as $record) {
+                        $types = $this->detectConflictType($record);
+                        foreach ($types as $type) {
+                            $conflicts[] = 'international_' . $type;
+                        }
+                    }
+                }
+
+                // International Orders
+                $intlOrderRecords = DB::table('international_orders')
+                    ->where('mobile_number', $value)
+                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
+                    ->get();
+
+                if ($intlOrderRecords->count()) {
+                    foreach ($intlOrderRecords as $record) {
+                        $types = $this->detectConflictType($record);
+                        foreach ($types as $type) {
+                            $conflicts[] = 'international_' . $type;
+                        }
+                    }
+                }
+
+                if (!empty($conflicts)) {
+                    $this->conflictSource = implode(', ', array_unique($conflicts));
+                    return false;
+                }
+
+
+            // No conflicts found
+            return true;
+
+    }
+
+    protected function detectConflictType(object $record): array
+    {
+        $conflicts = [];
+
+        // Use null safe checks for properties in case they don't exist
+        $status = $record->status ?? null;
+        $offersStatus = $record->offers_status ?? null;
+        $ordersStatus = $record->orders_status ?? null;
+
+        if ($status === 2) {
+            $conflicts[] = 'inquiries';
+        } elseif ($status === 1) {
+            $conflicts[] = 'offers';
+        } elseif ($status === 0) {
+            $conflicts[] = 'cancellations';
+        }
+
+        if ($offersStatus === 0) {
+            $conflicts[] = 'offer_cancellations';
+        } elseif ($offersStatus === 1) {
+            $conflicts[] = 'orders';
+        }
+
+        if ($ordersStatus === 0) {
+            $conflicts[] = 'order_cancellations';
+        }
+
+        return $conflicts;
     }
 
     public function message(): string
     {
-        return match ($this->conflictSource) {
-            'blocked' => 'This inquiry is blocked.',
-            'inquiries' => 'Mobile number already exists in inquiries.',
-            'orders' => 'Mobile number already exists in orders.',
-            'international_inquiries' => 'Mobile number already exists in international inquiries.',
-            'international_orders' => 'Mobile number already exists in international orders.',
-            default => 'This mobile number already exists.',
+        // Map conflict source to user-friendly messages
+        $map = [
+            'blocked' => 'blocked',
+            'inquiries' => 'Domestic Inquiries',
+            'offers' => 'Domestic Offers',
+            'cancellations' => 'Domestic Inquiry Cancellations',
+            'offer_cancellations' => 'Domestic Offer Cancellations',
+            'orders' => 'Domestic Orders',
+            'order_cancellations' => 'Domestic Order Cancellations',
+            'international_inquiries' => 'International Inquiries',
+            'international_offers' => 'International Offers',
+            'international_cancellations' => 'International Inquiry Cancellations',
+            'international_offer_cancellations' => 'International Offer Cancellations',
+            'international_orders' => 'International Orders',
+            'international_order_cancellations' => 'International Order Cancellations',
+        ];
 
-        };
+        // If conflictSource has multiple values separated by commas, map each and join
+        if ($this->conflictSource) {
+            $sources = array_map('trim', explode(',', $this->conflictSource));
+            $messages = [];
+
+            foreach ($sources as $source) {
+                $messages[] = '<li> - ' . ($map[$source]) . '</li>';
+
+            }
+           return '<ul>' . implode('', $messages) . '</ul>';
+        }
+
+        return '<ul><li>This mobile number already exists.</li></ul>';
+
     }
 }
+

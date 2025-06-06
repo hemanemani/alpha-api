@@ -45,28 +45,23 @@ class InternationalInquiryImport implements ToModel, WithHeadingRow, SkipsOnFail
             return null;
         }
 
-        // UniqueMobileAcrossTables validation (manual)
-        $rule = new UniqueMobileAcrossTables;
-        if (!$rule->passes('mobile_number', $row['mobile_number'])) {
-            $this->errors[] = [
-                'row'    => $this->currentRow,
-                'errors' => [$rule->message()]
-            ];
-            return null;
-        }
-
         $validator = Validator::make($row, [
             'mobile_number'      => 'required',
-            'inquiry_date'       => 'required|date_format:d-m-Y',
-            'product_categories' => 'required|string',
-            'specific_product'   => 'required|string',
-            'name'               => 'required|string|max:255',
+            'inquiry_date'       => 'required',
+            'product_categories' => 'nullable|string',
+            'specific_product'   => 'nullable|string',
+            'name'               => 'nullable|string|max:255',
             'location'           => 'nullable|string|max:255',
             'inquiry_through'    => 'nullable|string|max:255',
             'inquiry_reference'  => 'nullable|string|max:255',
-            'first_contact_date' => 'nullable|date_format:d-m-Y',
+            'first_contact_date' => 'nullable',
             'first_response'     => 'nullable|string|max:255',
-            'second_contact_date'=> 'nullable|date_format:d-m-Y',
+            'second_contact_date'=> 'nullable',
+            'second_response'     => 'nullable|string|max:255',
+            'third_contact_date'=> 'nullable',
+            'third_response'     => 'nullable|string|max:255',
+            'notes'     => 'nullable|string|max:255',
+            'status'      => 'required',
             
         ]);
 
@@ -103,7 +98,7 @@ class InternationalInquiryImport implements ToModel, WithHeadingRow, SkipsOnFail
             : null;
     
     
-        return new InternationInquiry([
+        $international_inquiry = new InternationInquiry([
             'inquiry_number'        => $nextInquiryNumber++,
             'mobile_number'         => $row['mobile_number'],
             'inquiry_date'          => $inquiry_date,
@@ -120,8 +115,23 @@ class InternationalInquiryImport implements ToModel, WithHeadingRow, SkipsOnFail
             'third_contact_date'    => $third_contact_date,
             'third_response'        => $row['third_response'] ?? null,
             'notes'                 => $row['notes'] ?? null,
+            'status'                => $row['status'],
             'user_id'               => auth()->id(),
         ]);
+
+        $international_inquiry->save();
+
+        if ((int) $row['status'] === 1) {
+            $lastOfferNumber = \App\Models\InternationalOffer::max('offer_number') ?? 0;
+            $newOfferNumber = $lastOfferNumber + 1;
+
+            \App\Models\InternationalOffer::create([
+                'international_inquiry_id'    => $international_inquiry->id,
+                'offer_number'  => $newOfferNumber,
+            ]);
+        }
+
+        return $international_inquiry;
     }
 
     public function onFailure(Failure ...$failures)

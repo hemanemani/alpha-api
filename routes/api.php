@@ -44,6 +44,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/refresh-all', [DashboardController::class, 'refresh_all']);
 
     Route::get('/inquiries/next-number', [InquiryController::class, 'getNextInquiryNumber']);
+
+    Route::get('/inquiries/next-serial-number', [InquiryController::class, 'getNextSerialNumber']);
+
+    Route::get('/international_inquiries/next-serial-number', [InternationalInquiryController::class, 'getNextInternationalSerialNumber']);
+
     Route::get('/international_inquiries/next-number', [InternationalInquiryController::class, 'getNextInternationalInquiryNumber']);
 
     Route::get('/orders/next-number', [OrderController::class, 'getNextOrderNumber']);

@@ -14,7 +14,7 @@ use App\Rules\UniqueMobileAcrossTables;
 use App\Models\BlockedInquiry;
 use App\Models\BlockedOffer;
 use App\Models\BlockedOrder;
-
+use App\Models\Offer;
 
 
 class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
@@ -26,11 +26,16 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
     {
         $this->currentRow++;
         static $nextInquiryNumber = null;
+        $offer_number = null;
+
 
         if (is_null($nextInquiryNumber)) {
             $nextInquiryNumber = Inquiry::max('inquiry_number') ?? 0;
             $nextInquiryNumber++;
         }
+
+
+
 
         // Blocked mobile number check
         if (
@@ -44,33 +49,26 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
             ];
             return null;
         }
-
-        // UniqueMobileAcrossTables validation (manual)
-        $rule = new UniqueMobileAcrossTables;
-        if (!$rule->passes('mobile_number', $row['mobile_number'])) {
-            $this->errors[] = [
-                'row'    => $this->currentRow,
-                'errors' => [$rule->message()]
-            ];
-            return null;
-        }
-
     
 
         $validator = Validator::make($row, [
             // 'mobile_number'      => 'required|digits:10',
             'mobile_number'      => 'required',
-            'inquiry_date'       => 'required|date_format:d-m-Y',
-            'product_categories' => 'required|string',
-            'specific_product'   => 'required|string',
-            'name'               => 'required|string|max:255',
+            'inquiry_date'       => 'required',
+            'product_categories' => 'nullable|string',
+            'specific_product'   => 'nullable|string',
+            'name'               => 'nullable|string|max:255',
             'location'           => 'nullable|string|max:255',
             'inquiry_through'    => 'nullable|string|max:255',
             'inquiry_reference'  => 'nullable|string|max:255',
-            'first_contact_date' => 'nullable|date_format:d-m-Y',
+            'first_contact_date' => 'nullable',
             'first_response'     => 'nullable|string|max:255',
-            'second_contact_date'=> 'nullable|date_format:d-m-Y',
-            
+            'second_contact_date'=> 'nullable',
+            'second_response'     => 'nullable|string|max:255',
+            'third_contact_date'=> 'nullable',
+            'third_response'     => 'nullable|string|max:255',
+            'notes'     => 'nullable|string|max:255',
+            'status'      => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -104,9 +102,15 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
         $third_contact_date = !empty($row['third_contact_date']) 
             ? $this->parseDate($row['third_contact_date']) 
             : null;
-    
-    
-        return new Inquiry([
+
+
+        if ((int) $row['status'] === 1) {
+            $lastOfferNumber = Offer::max('offer_number') ?? 0;
+            $offer_number = $lastOfferNumber + 1;
+        }
+
+
+        $inquiry =  new Inquiry([
             'inquiry_number'        => $nextInquiryNumber++,
             'mobile_number'         => $row['mobile_number'],
             'inquiry_date'          => $inquiry_date,
@@ -123,8 +127,25 @@ class InquiryImport implements ToModel, WithHeadingRow, SkipsOnFailure
             'third_contact_date'    => $third_contact_date,
             'third_response'        => $row['third_response'] ?? null,
             'notes'                 => $row['notes'] ?? null,
+            'status'                => $row['status'],
             'user_id'               => auth()->id(),
         ]);
+
+        $inquiry->save();
+
+        if ((int) $row['status'] === 1) {
+            $lastOfferNumber = \App\Models\Offer::max('offer_number') ?? 0;
+            $newOfferNumber = $lastOfferNumber + 1;
+
+            \App\Models\Offer::create([
+                'inquiry_id'    => $inquiry->id,
+                'offer_number'  => $newOfferNumber,
+            ]);
+        }
+
+        return $inquiry;
+
+
     }
 
     public function onFailure(Failure ...$failures)

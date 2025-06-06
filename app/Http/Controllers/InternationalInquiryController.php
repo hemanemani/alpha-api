@@ -551,7 +551,7 @@ class InternationalInquiryController extends Controller
 
         // ]);
 
-        $international_inquiry->inquiry_number = $validated['inquiry_number'] ?? $inquiry->inquiry_number;
+        $international_inquiry->inquiry_number = $validated['inquiry_number'] ?? $international_inquiry->inquiry_number;
         $international_inquiry->mobile_number = $validated['mobile_number'];
         $international_inquiry->inquiry_date = $inquiry_date;
         $international_inquiry->product_categories = $validated['product_categories'];
@@ -569,7 +569,7 @@ class InternationalInquiryController extends Controller
         $international_inquiry->notes = $validated['notes'];
         $international_inquiry->status = $validated['status'];
         $international_inquiry->offers_status = $request->has('offers_status') ? $validated['offers_status'] : 2;
-        $inquiry->select_user = $validated['select_user'];
+        $international_inquiry->select_user = $validated['select_user'];
 
         $international_inquiry->save();
 
@@ -1061,7 +1061,14 @@ class InternationalInquiryController extends Controller
 
     public function getNextInternationalInquiryNumber()
     {
-        $nextNumber = \App\Models\Inquiry::max('inquiry_number') + 1;
+        $nextNumber = \App\Models\InternationInquiry::max('inquiry_number') + 1;
         return response()->json(['next_inquiry_number' => $nextNumber]);
+    }
+    public function getNextInternationalSerialNumber()
+    {
+        $totalActive = InternationInquiry::where('status', 2)->count();
+        return response()->json([
+        'next_serial' => $totalActive + 1,
+        ]);
     }
 }
