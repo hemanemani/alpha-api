@@ -44,6 +44,24 @@ class UniqueMobileAcrossTables implements Rule
                 return true;
             }
 
+            if ($this->excludeId) {
+                $tablesToCheck = [
+                    'inquiries',
+                    'international_inquiries',
+                    'orders',
+                    'international_orders',
+                ];
+
+                foreach ($tablesToCheck as $table) {
+                    $original = DB::table($table)->where('id', $this->excludeId)->value('mobile_number');
+                    if ($original === $value) {
+                        return true;
+                    }
+                }
+            }
+
+
+
             // Check blocked tables
             $isBlocked = DB::table('blocked_inquiries')->where('mobile_number', $value)->exists()
                 || DB::table('blocked_domestic_offers')->where('mobile_number', $value)->exists()
@@ -63,7 +81,6 @@ class UniqueMobileAcrossTables implements Rule
             // Domestic Inquiries
                 $inquiryRecords = DB::table('inquiries')
                     ->where('mobile_number', $value)
-                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
                     ->get();
 
                 if ($inquiryRecords->count()) {
@@ -76,7 +93,6 @@ class UniqueMobileAcrossTables implements Rule
 
                 $orderRecords = DB::table('orders')
                     ->where('mobile_number', $value)
-                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
                     ->get();
 
                 if ($orderRecords->count()) {
@@ -89,7 +105,6 @@ class UniqueMobileAcrossTables implements Rule
                 // International Inquiries
                 $intlInquiryRecords = DB::table('international_inquiries')
                     ->where('mobile_number', $value)
-                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
                     ->get();
 
                 if ($intlInquiryRecords->count()) {
@@ -104,7 +119,6 @@ class UniqueMobileAcrossTables implements Rule
                 // International Orders
                 $intlOrderRecords = DB::table('international_orders')
                     ->where('mobile_number', $value)
-                    ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
                     ->get();
 
                 if ($intlOrderRecords->count()) {
